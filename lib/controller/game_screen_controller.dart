@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart'; // 추가된 코드
 import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:http/http.dart' as http;
 
@@ -93,6 +93,18 @@ class GameScreenController {
       _isDialoguePlaying = true;
       onUpdate();
       _playNextLine();
+    }
+  }
+
+  void handleKeyEvent(KeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.enter) {
+      if (canSendMessage) {
+        onUpdate();
+      } else {
+        skipOrNext();
+      }
+    } else if (event.logicalKey == LogicalKeyboardKey.space) {
+      skipOrNext();
     }
   }
 }

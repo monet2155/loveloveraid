@@ -72,6 +72,7 @@ class GameScreenView extends StatelessWidget {
                                   hintStyle: TextStyle(color: Colors.white38),
                                   border: InputBorder.none,
                                 ),
+                                autofocus: true,
                                 onSubmitted: (_) => onSend(),
                               ),
                             ),

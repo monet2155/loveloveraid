@@ -106,9 +106,10 @@ class _GameScreenState extends State<GameScreen> {
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
-                margin: const EdgeInsets.all(16),
+                margin: const EdgeInsets.all(16), // 좌우 여백 제거
                 padding: const EdgeInsets.all(16),
-                height: 120,
+                height: 150,
+                width: double.infinity, // 너비를 화면 전체로 설정
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(16),

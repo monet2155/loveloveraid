@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:loveloveraid/screen/game_screen.dart';
 import 'package:window_size/window_size.dart';
 
 void main() {
@@ -21,7 +22,9 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: Scaffold(body: Center(child: Text('Hello World!'))),
+      title: '러브러브 레이드',
+      debugShowCheckedModeBanner: false,
+      home: GameScreen(),
     );
   }
 }

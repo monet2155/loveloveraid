@@ -2,9 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/screen/game_screen.dart';
 import 'package:window_size/window_size.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ 추가
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(); // ✅ .env 로드
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     const size = Size(1280, 720);

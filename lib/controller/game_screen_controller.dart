@@ -35,10 +35,11 @@ class GameScreenController {
     onUpdate();
 
     final apiUrl = dotenv.env['API_URL'];
+    final provider = dotenv.env['LLM_PROVIDER'];
 
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl/npc/$_sessionId/dialogue'),
+        Uri.parse('$apiUrl/npc/$_sessionId/dialogue?provider=${provider}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'player_input': message}),
       );

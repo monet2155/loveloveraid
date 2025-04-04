@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +19,7 @@ class GameScreenController {
 
   String get currentCharacter => _currentLine?.character ?? '';
   String get visibleText => _visibleText;
-  bool get canSendMessage => !_isDialoguePlaying && !_isWaitingForTap;
+  bool get canSendMessage => !_isDialoguePlaying;
 
   String? _sessionId;
 

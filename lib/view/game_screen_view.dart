@@ -38,12 +38,7 @@ class GameScreenView extends StatelessWidget {
           body: Stack(
             children: [
               // 배경
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/background.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
+              Positioned.fill(child: Container(color: Colors.white)),
               // 캐릭터 이미지
               Align(
                 alignment: Alignment.bottomCenter,
@@ -54,7 +49,7 @@ class GameScreenView extends StatelessWidget {
                       alignment: Alignment.topCenter,
                       heightFactor: 0.7,
                       child: Image.asset(
-                        'assets/images/character_standing.png',
+                        'assets/images/c1_black.png',
                         fit: BoxFit.contain,
                       ),
                     ),

@@ -14,9 +14,25 @@ class _TitleScreenState extends State<TitleScreen> {
   @override
   Widget build(BuildContext context) {
     return TitleScreenView(
-      onStartGame: () {
+      onStartNewGame: () {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const GameScreen()),
+        );
+      },
+      onContinue: () {
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('이어하기'),
+                content: const Text('이어하기 기능은 아직 구현되지 않았습니다.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('확인'),
+                  ),
+                ],
+              ),
         );
       },
       onOpenSettings: () {

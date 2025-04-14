@@ -27,7 +27,6 @@ class GameScreenController {
 
   Future<void> init() async {
     await initSession();
-    await loadStoryFromAsset();
   }
 
   Future<void> sendPlayerMessage(String message) async {
@@ -148,13 +147,15 @@ class GameScreenController {
       return;
     }
 
+    final eventId = "1c1fc5d6-9d97-42a1-834a-cee27add99c1";
+
     final playerId =
         '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1'; // 이후 실제 사용자 ID 연동 가능
 
     final res = await http.post(
       Uri.parse('$apiUrl/npc/$universeId/$npcId/start-session'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'player_id': playerId}),
+      body: jsonEncode({'player_id': playerId, 'event_id': eventId}),
     );
 
     if (res.statusCode == 200) {
@@ -170,28 +171,5 @@ class GameScreenController {
     }
 
     _playNextLine();
-  }
-
-  Future<void> loadStoryFromAsset() async {
-    try {
-      final String jsonString = await rootBundle.loadString(
-        'assets/story/sample_story.json',
-      );
-      final List<dynamic> jsonList = jsonDecode(jsonString);
-
-      _dialogueQueue.clear(); // 기존 대화 제거
-      for (var item in jsonList) {
-        _dialogueQueue.add(
-          DialogueLine(character: item['character'], text: item['text']),
-        );
-      }
-
-      _playNextLine();
-    } catch (e) {
-      _dialogueQueue.add(
-        DialogueLine(character: '시스템', text: '스토리를 불러오는 데 실패했습니다.'),
-      );
-      _playNextLine();
-    }
   }
 }

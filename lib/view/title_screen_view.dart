@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 class TitleScreenView extends StatelessWidget {
-  final VoidCallback onStartGame;
+  final VoidCallback onStartNewGame;
+  final VoidCallback onContinue;
   final VoidCallback onOpenSettings;
   final VoidCallback onExitGame;
 
   const TitleScreenView({
     super.key,
-    required this.onStartGame,
+    required this.onStartNewGame,
+    required this.onContinue,
     required this.onOpenSettings,
     required this.onExitGame,
   });
@@ -27,14 +29,6 @@ class TitleScreenView extends StatelessWidget {
                 // 이미지가 없을 경우 색상으로 대체
                 return Container(
                   color: Colors.white, // 배경색을 흰색으로 변경
-                  // child: Center(
-                  //   child: Text(
-                  //     '배경 이미지가 필요합니다',
-                  //     style: TextStyle(
-                  //       color: Colors.black.withOpacity(0.5),
-                  //     ), // 텍스트 색상 변경
-                  //   ),
-                  // ),
                 );
               },
             ),
@@ -62,10 +56,12 @@ class TitleScreenView extends StatelessWidget {
                 ),
 
                 // 간격 조정
-                const SizedBox(height: 60),
+                const SizedBox(height: 30),
 
                 // 버튼 그룹
-                _buildMenuButton('게임 시작', onStartGame),
+                _buildMenuButton('새 게임', onStartNewGame),
+                const SizedBox(height: 16),
+                _buildMenuButton('이어하기', onContinue),
                 const SizedBox(height: 16),
                 _buildMenuButton('환경 설정', onOpenSettings),
                 const SizedBox(height: 16),

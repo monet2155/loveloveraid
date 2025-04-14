@@ -23,8 +23,11 @@ class GameScreenController {
 
   String? _sessionId;
 
-  GameScreenController({required this.onUpdate}) {
-    initSession(); // ✅ 세션 자동 시작
+  GameScreenController({required this.onUpdate});
+
+  Future<void> init() async {
+    await initSession();
+    await loadStoryFromAsset();
   }
 
   Future<void> sendPlayerMessage(String message) async {
@@ -167,5 +170,28 @@ class GameScreenController {
     }
 
     _playNextLine();
+  }
+
+  Future<void> loadStoryFromAsset() async {
+    try {
+      final String jsonString = await rootBundle.loadString(
+        'assets/story/sample_story.json',
+      );
+      final List<dynamic> jsonList = jsonDecode(jsonString);
+
+      _dialogueQueue.clear(); // 기존 대화 제거
+      for (var item in jsonList) {
+        _dialogueQueue.add(
+          DialogueLine(character: item['character'], text: item['text']),
+        );
+      }
+
+      _playNextLine();
+    } catch (e) {
+      _dialogueQueue.add(
+        DialogueLine(character: '시스템', text: '스토리를 불러오는 데 실패했습니다.'),
+      );
+      _playNextLine();
+    }
   }
 }

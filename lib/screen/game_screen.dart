@@ -24,6 +24,7 @@ class _GameScreenState extends State<GameScreen> {
 
     // 키보드 이벤트를 계속 받기 위해 항상 포커스 요청
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.init();
       _keyboardFocusNode.requestFocus();
     });
   }

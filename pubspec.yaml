@@ -25,4 +25,3 @@ flutter:
     - assets/images/
     - .env
     - .env.local
-    - assets/story/sample_story.json

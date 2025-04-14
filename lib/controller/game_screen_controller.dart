@@ -40,7 +40,9 @@ class GameScreenController {
 
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl/npc/$_sessionId/dialogue?provider=${provider}'),
+        Uri.parse(
+          '$apiUrl/npc/$_sessionId/dialogue${provider != null ? "?provider=$provider" : ""}',
+        ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'player_input': message}),
       );
@@ -65,6 +67,7 @@ class GameScreenController {
           _dialogueQueue.add(DialogueLine(character: character, text: text));
         }
       } else {
+        print(response.body);
         _dialogueQueue.add(
           DialogueLine(character: '시스템', text: '대화 중 오류가 발생했습니다.'),
         );

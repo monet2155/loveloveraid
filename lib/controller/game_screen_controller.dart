@@ -5,6 +5,11 @@ import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+const characters = [
+  {"id": "d0af12db-761e-44f3-831d-ab431522c983", "name": "이서아"},
+  {"id": "d0af12db-761e-44f3-831d-ab431522c982", "name": "ㅁㄴㅇ"},
+];
+
 class GameScreenController {
   final Function onUpdate;
 
@@ -164,6 +169,7 @@ class GameScreenController {
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       _sessionId = data['session_id'];
+      getInitialEvent(eventId);
       // _dialogueQueue.add(DialogueLine(character: '시스템', text: '세션이 시작되었습니다.'));
     } else {
       print('세션 시작 실패: ${res.statusCode}');
@@ -174,5 +180,75 @@ class GameScreenController {
     }
 
     _playNextLine();
+  }
+
+  Future<void> getInitialEvent(String eventId) async {
+    final apiUrl = dotenv.env['API_URL'];
+    final res = await http.get(
+      Uri.parse('$apiUrl/event/$eventId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (res.statusCode == 200) {
+      final decodedBody = json.decode(utf8.decode(res.bodyBytes));
+      print('서버 응답: ${decodedBody}');
+      final Map<String, dynamic> data = decodedBody;
+      List steps = data["steps"];
+
+      for (var step in steps) {
+        print('step: $step');
+        Step stepData = Step.fromJson(step);
+        String text = stepData.message;
+        String speakerType = stepData.speakerType;
+        String character = "";
+
+        if (speakerType == 'PLAYER') {
+          character = '플레이어';
+        } else if (speakerType == 'NPC') {
+          character =
+              characters.firstWhere(
+                (c) => c['id'] == stepData.speakerId,
+              )['name'] ??
+              "NPC";
+        } else if (speakerType == 'SYSTEM') {
+          character = '시스템';
+        }
+
+        _dialogueQueue.add(DialogueLine(character: character, text: text));
+      }
+    } else {
+      print('세션 시작 실패: ${res.statusCode}');
+      print('응답 본문: ${res.body}');
+      _dialogueQueue.add(
+        DialogueLine(character: '시스템', text: '세션 시작에 실패했습니다.'),
+      );
+    }
+    _playNextLine();
+  }
+}
+
+class Step {
+  String id;
+  int order;
+  String message;
+  String speakerType;
+  String? speakerId; // Player ID 또는 NPC ID 저장 (system은 null)
+
+  Step({
+    required this.id,
+    required this.order,
+    required this.message,
+    required this.speakerType,
+    this.speakerId,
+  });
+
+  factory Step.fromJson(Map<String, dynamic> json) {
+    return Step(
+      id: json['id'],
+      order: json['order'],
+      message: json['message'],
+      speakerType: json['speakerType'],
+      speakerId: json['speakerId'],
+    );
   }
 }

@@ -4,11 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-const characters = [
-  {"id": "d0af12db-761e-44f3-831d-ab431522c983", "name": "이서아"},
-  {"id": "d0af12db-761e-44f3-831d-ab431522c982", "name": "ㅁㄴㅇ"},
-];
+import 'package:loveloveraid/model/npc.dart';
 
 class GameScreenController {
   final Function onUpdate;
@@ -28,7 +24,9 @@ class GameScreenController {
 
   String? _sessionId;
 
-  GameScreenController({required this.onUpdate});
+  final List<Npc> npcs;
+
+  GameScreenController({required this.onUpdate, required this.npcs});
 
   Future<void> init() async {
     await initSession();
@@ -207,11 +205,7 @@ class GameScreenController {
         if (speakerType == 'PLAYER') {
           character = '플레이어';
         } else if (speakerType == 'NPC') {
-          character =
-              characters.firstWhere(
-                (c) => c['id'] == stepData.speakerId,
-              )['name'] ??
-              "NPC";
+          character = npcs.firstWhere((c) => c.id == stepData.speakerId).name;
         } else if (speakerType == 'SYSTEM') {
           character = '시스템';
         }

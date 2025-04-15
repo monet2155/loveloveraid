@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/model/npc.dart';
+import 'package:loveloveraid/view/player_name_input_screen.dart';
 import 'package:loveloveraid/view/title_screen_view.dart';
 import 'package:loveloveraid/screen/game_screen.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +17,7 @@ class TitleScreen extends StatefulWidget {
 
 class _TitleScreenState extends State<TitleScreen> {
   List<Npc> npcs = [];
+  final TextEditingController nameController = TextEditingController();
 
   @override
   void initState() {
@@ -55,8 +57,28 @@ class _TitleScreenState extends State<TitleScreen> {
   Widget build(BuildContext context) {
     return TitleScreenView(
       onStartNewGame: () {
+        // Navigator.of(context).pushReplacement(
+        //   MaterialPageRoute(builder: (context) => GameScreen(npcs: npcs)),
+        // );
+
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => GameScreen(npcs: npcs)),
+          MaterialPageRoute(
+            builder:
+                (context) => PlayerNameInputScreen(
+                  nameController: nameController,
+                  onSubmit: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder:
+                            (context) => GameScreen(
+                              npcs: npcs,
+                              playerName: nameController.text, // 플레이어 이름 전달
+                            ),
+                      ),
+                    );
+                  },
+                ),
+          ),
         );
       },
       onContinue: () {

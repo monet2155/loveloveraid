@@ -8,6 +8,7 @@ import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/model/step.dart';
 
 class GameScreenController {
+  final String playerName;
   final Function onUpdate;
 
   final List<DialogueLine> _dialogueQueue = [];
@@ -28,7 +29,11 @@ class GameScreenController {
 
   final List<Npc> npcs;
 
-  GameScreenController({required this.onUpdate, required this.npcs});
+  GameScreenController({
+    required this.playerName,
+    required this.onUpdate,
+    required this.npcs,
+  });
 
   Future<void> init() async {
     await initSession();
@@ -71,18 +76,13 @@ class GameScreenController {
           if (message.contains('\\n')) {
             List<String> splitMessage = message.split('\\n');
             for (var i = 0; i < splitMessage.length; i++) {
-              if (i == 0) {
-                _dialogueQueue.add(
-                  DialogueLine(character: character, text: splitMessage[i]),
-                );
-              } else {
-                _dialogueQueue.add(
-                  DialogueLine(
-                    character: character,
-                    text: splitMessage[i].trim(),
-                  ),
-                );
-              }
+              String currentMessage = splitMessage[i].trim().replaceAll(
+                "player",
+                playerName,
+              );
+              _dialogueQueue.add(
+                DialogueLine(character: character, text: currentMessage),
+              );
             }
           } else {
             _dialogueQueue.add(
@@ -232,7 +232,10 @@ class GameScreenController {
           character = '시스템';
         }
 
-        _dialogueQueue.add(DialogueLine(character: character, text: text));
+        String currentMessage = text.trim().replaceAll("player", playerName);
+        _dialogueQueue.add(
+          DialogueLine(character: character, text: currentMessage),
+        );
       }
     } else {
       print('세션 시작 실패: ${res.statusCode}');

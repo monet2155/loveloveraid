@@ -229,11 +229,9 @@ class GameScreenController {
     _dialogueQueue.add(
       DialogueLine(character: character, text: currentMessage),
     );
-    _playNextLine();
   }
 
   void addErrorDialogueLine(String error) {
     _dialogueQueue.add(DialogueLine(character: '시스템', text: '오류 발생: $error'));
-    _playNextLine();
   }
 }

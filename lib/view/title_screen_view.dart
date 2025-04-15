@@ -110,7 +110,7 @@ class TitleScreenView extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.pink.shade700,
+            color: Colors.pink.shade400,
           ),
         ),
       ),

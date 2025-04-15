@@ -6,8 +6,9 @@ import 'package:loveloveraid/view/game_screen_view.dart';
 
 class GameScreen extends StatefulWidget {
   List<Npc> npcs;
+  String playerName = '';
 
-  GameScreen({super.key, required this.npcs});
+  GameScreen({super.key, required this.npcs, required this.playerName});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -26,6 +27,7 @@ class _GameScreenState extends State<GameScreen> {
     _controller = GameScreenController(
       onUpdate: () => setState(() {}),
       npcs: widget.npcs,
+      playerName: widget.playerName,
     );
 
     // 키보드 이벤트를 계속 받기 위해 항상 포커스 요청

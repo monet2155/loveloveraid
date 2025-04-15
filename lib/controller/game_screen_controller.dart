@@ -68,7 +68,27 @@ class GameScreenController {
           String character = text.split(':')[0];
           String message = text.split(':')[1].trim();
 
-          _dialogueQueue.add(DialogueLine(character: character, text: message));
+          if (message.contains('\\n')) {
+            List<String> splitMessage = message.split('\\n');
+            for (var i = 0; i < splitMessage.length; i++) {
+              if (i == 0) {
+                _dialogueQueue.add(
+                  DialogueLine(character: character, text: splitMessage[i]),
+                );
+              } else {
+                _dialogueQueue.add(
+                  DialogueLine(
+                    character: character,
+                    text: splitMessage[i].trim(),
+                  ),
+                );
+              }
+            }
+          } else {
+            _dialogueQueue.add(
+              DialogueLine(character: character, text: message),
+            );
+          }
         }
       } else {
         print(utf8.decode(response.bodyBytes));

@@ -73,7 +73,7 @@ class GameScreenController {
           }
         }
       } else {
-        print(response.body);
+        print(utf8.decode(response.bodyBytes));
         _dialogueQueue.add(
           DialogueLine(character: '시스템', text: '대화 중 오류가 발생했습니다.'),
         );

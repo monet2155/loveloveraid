@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:loveloveraid/controller/game_screen_controller.dart';
 
 class GameScreenView extends StatelessWidget {
-  final String characterName;
-  final String visibleText;
-  final bool canSendMessage;
+  final GameScreenController controller;
   final TextEditingController textController;
+  final FocusNode keyboardFocusNode;
+  final FocusNode textFieldFocusNode;
   final VoidCallback onSend;
-  final VoidCallback onTap;
   final Function(KeyEvent) onKeyEvent;
-  final FocusNode keyboardFocusNode; // KeyboardListener 전용 FocusNode
-  final FocusNode textFieldFocusNode; // TextField 전용 FocusNode
 
   const GameScreenView({
     super.key,
-    required this.characterName,
-    required this.visibleText,
-    required this.canSendMessage,
+    required this.controller,
     required this.textController,
-    required this.onSend,
-    required this.onTap,
-    required this.onKeyEvent,
     required this.keyboardFocusNode,
     required this.textFieldFocusNode,
+    required this.onSend,
+    required this.onKeyEvent,
   });
 
   @override
@@ -31,8 +26,8 @@ class GameScreenView extends StatelessWidget {
       onKeyEvent: onKeyEvent,
       autofocus: true,
       child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.translucent, // 텍스트필드 외부 탭 감지
+        onTap: controller.skipOrNext,
+        behavior: HitTestBehavior.translucent,
         child: Scaffold(
           backgroundColor: Colors.black,
           body: Stack(
@@ -40,7 +35,7 @@ class GameScreenView extends StatelessWidget {
               // 배경
               Positioned.fill(child: Container(color: Colors.white)),
               // 캐릭터 이미지
-              characterName != '시스템'
+              controller.currentCharacter != '시스템'
                   ? Align(
                     alignment: Alignment.bottomCenter,
                     child: Transform.scale(
@@ -50,7 +45,7 @@ class GameScreenView extends StatelessWidget {
                           alignment: Alignment.topCenter,
                           heightFactor: 0.7,
                           child: Image.asset(
-                            'assets/images/${characterName}_black.png',
+                            'assets/images/${controller.currentCharacter}_black.png',
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -71,7 +66,7 @@ class GameScreenView extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: 16),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.7),
+                        color: Colors.black.withOpacity(0.7),
                         borderRadius: const BorderRadius.all(
                           Radius.circular(16),
                         ),
@@ -84,7 +79,7 @@ class GameScreenView extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              characterName,
+                              controller.currentCharacter,
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 16,
@@ -93,7 +88,7 @@ class GameScreenView extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              visibleText,
+                              controller.visibleText,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -103,12 +98,12 @@ class GameScreenView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    canSendMessage
+                    controller.canSendMessage
                         ? Container(
                           margin: const EdgeInsets.all(16),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.7),
+                            color: Colors.black.withOpacity(0.7),
                             borderRadius: const BorderRadius.all(
                               Radius.circular(16),
                             ),
@@ -138,7 +133,7 @@ class GameScreenView extends StatelessWidget {
                             ],
                           ),
                         )
-                        : Container(margin: EdgeInsets.only(top: 16)),
+                        : Container(margin: const EdgeInsets.only(top: 16)),
                   ],
                 ),
               ),

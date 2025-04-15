@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/view/title_screen_view.dart';
 import 'package:loveloveraid/screen/game_screen.dart';
+import 'package:http/http.dart' as http;
 
 class TitleScreen extends StatefulWidget {
   const TitleScreen({super.key});
@@ -11,12 +15,48 @@ class TitleScreen extends StatefulWidget {
 }
 
 class _TitleScreenState extends State<TitleScreen> {
+  List<Npc> npcs = [];
+
+  @override
+  void initState() {
+    super.initState();
+    initGame();
+  }
+
+  void initGame() async {
+    await getNpcList();
+  }
+
+  Future<void> getNpcList() async {
+    final apiUrl = dotenv.env['API_URL'];
+    final universeId = dotenv.env['UNIVERSE_ID'];
+
+    final res = await http.get(
+      Uri.parse('$apiUrl/universe/$universeId/npcs'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (res.statusCode == 200) {
+      final decodedBody = json.decode(utf8.decode(res.bodyBytes));
+      print('서버 응답: ${decodedBody}');
+      final Map<String, dynamic> data = decodedBody;
+      setState(() {
+        for (var npc in data['npcs']) {
+          npcs.add(Npc.fromJson(npc));
+        }
+      });
+    } else {
+      print('세션 시작 실패: ${res.statusCode}');
+      print('응답 본문: ${res.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return TitleScreenView(
       onStartNewGame: () {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const GameScreen()),
+          MaterialPageRoute(builder: (context) => GameScreen(npcs: npcs)),
         );
       },
       onContinue: () {

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
+import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/view/game_screen_view.dart';
 
 class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+  List<Npc> npcs;
+
+  GameScreen({super.key, required this.npcs});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -20,7 +23,10 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = GameScreenController(onUpdate: () => setState(() {}));
+    _controller = GameScreenController(
+      onUpdate: () => setState(() {}),
+      npcs: widget.npcs,
+    );
 
     // 키보드 이벤트를 계속 받기 위해 항상 포커스 요청
     WidgetsBinding.instance.addPostFrameCallback((_) {

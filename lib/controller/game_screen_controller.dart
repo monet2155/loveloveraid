@@ -24,7 +24,7 @@ class GameScreenController {
 
   String get currentCharacter => _currentLine?.character ?? '';
   String get visibleText => _visibleText;
-  bool get canSendMessage => !_isDialoguePlaying;
+  bool get canSendMessage => !_isDialoguePlaying && _dialogueQueue.isEmpty;
 
   String? _sessionId;
 
@@ -64,12 +64,14 @@ class GameScreenController {
         }
 
         String character = data['dialogue'].split(':')[0];
-        String text = data['dialogue'].split(':')[1].trim();
+        String message = data['dialogue'].split(':')[1].trim();
 
-        if (character == '시스템') {
-          _dialogueQueue.add(DialogueLine(character: character, text: text));
-        } else {
-          _dialogueQueue.add(DialogueLine(character: character, text: text));
+        for (var text in message.split("\\n")) {
+          if (character == '시스템') {
+            _dialogueQueue.add(DialogueLine(character: character, text: text));
+          } else {
+            _dialogueQueue.add(DialogueLine(character: character, text: text));
+          }
         }
       } else {
         print(response.body);

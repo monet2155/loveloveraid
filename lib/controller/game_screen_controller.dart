@@ -63,15 +63,12 @@ class GameScreenController {
           return;
         }
 
-        String character = data['dialogue'].split(':')[0];
-        String message = data['dialogue'].split(':')[1].trim();
+        List<String> dialogueList = data['dialogue'].split("\n\n");
+        for (var text in dialogueList) {
+          String character = text.split(':')[0];
+          String message = text.split(':')[1].trim();
 
-        for (var text in message.split("\\n")) {
-          if (character == '시스템') {
-            _dialogueQueue.add(DialogueLine(character: character, text: text));
-          } else {
-            _dialogueQueue.add(DialogueLine(character: character, text: text));
-          }
+          _dialogueQueue.add(DialogueLine(character: character, text: message));
         }
       } else {
         print(utf8.decode(response.bodyBytes));
@@ -146,10 +143,9 @@ class GameScreenController {
 
   Future<void> initSession() async {
     final universeId = dotenv.env['UNIVERSE_ID'];
-    final npcId = dotenv.env['NPC_ID'];
     final apiUrl = dotenv.env['API_URL'];
 
-    if (universeId == null || npcId == null || apiUrl == null) {
+    if (universeId == null || apiUrl == null) {
       _dialogueQueue.add(
         DialogueLine(character: '시스템', text: '환경변수가 누락되었습니다.'),
       );
@@ -163,9 +159,13 @@ class GameScreenController {
         '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1'; // 이후 실제 사용자 ID 연동 가능
 
     final res = await http.post(
-      Uri.parse('$apiUrl/npc/$universeId/$npcId/start-session'),
+      Uri.parse('$apiUrl/npc/$universeId/start-session'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'player_id': playerId, 'event_id': eventId}),
+      body: jsonEncode({
+        'player_id': playerId,
+        'event_id': eventId,
+        "npcs": npcs.map((npc) => npc.id).toList(),
+      }),
     );
 
     if (res.statusCode == 200) {
@@ -175,7 +175,7 @@ class GameScreenController {
       // _dialogueQueue.add(DialogueLine(character: '시스템', text: '세션이 시작되었습니다.'));
     } else {
       print('세션 시작 실패: ${res.statusCode}');
-      print('응답 본문: ${res.body}');
+      print('응답 본문: ${utf8.decode(res.bodyBytes)}');
       _dialogueQueue.add(
         DialogueLine(character: '시스템', text: '세션 시작에 실패했습니다.'),
       );

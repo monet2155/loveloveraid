@@ -21,7 +21,8 @@ class GameScreenController {
 
   String get currentCharacter => _currentLine?.character ?? '';
   String get visibleText => _visibleText;
-  bool get canSendMessage => !_isDialoguePlaying && _dialogueQueue.isEmpty;
+  bool get canSendMessage =>
+      !_isDialoguePlaying && _dialogueQueue.isEmpty && !_isWaitingForTap;
 
   String? _sessionId;
 

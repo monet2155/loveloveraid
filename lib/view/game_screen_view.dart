@@ -40,22 +40,24 @@ class GameScreenView extends StatelessWidget {
               // 배경
               Positioned.fill(child: Container(color: Colors.white)),
               // 캐릭터 이미지
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Transform.scale(
-                  scale: 1.5,
-                  child: ClipRect(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      heightFactor: 0.7,
-                      child: Image.asset(
-                        'assets/images/c1_black.png',
-                        fit: BoxFit.contain,
+              characterName != '시스템'
+                  ? Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Transform.scale(
+                      scale: 1.5,
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          heightFactor: 0.7,
+                          child: Image.asset(
+                            'assets/images/${characterName}_black.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
+                  )
+                  : Container(),
               // 대화창/입력창
               Positioned(
                 left: 0,

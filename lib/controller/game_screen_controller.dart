@@ -62,9 +62,7 @@ class GameScreenController {
         print('서버 응답: ${decodedBody}');
         final Map<String, dynamic> data = decodedBody;
         if (data['dialogue'] == null) {
-          _dialogueQueue.add(
-            DialogueLine(character: '시스템', text: '대화 중 오류가 발생했습니다.'),
-          );
+          addErrorDialogueLine('서버에서 대화 내용을 가져오지 못했습니다.');
           return;
         }
 
@@ -76,32 +74,19 @@ class GameScreenController {
           if (message.contains('\\n')) {
             List<String> splitMessage = message.split('\\n');
             for (var i = 0; i < splitMessage.length; i++) {
-              String currentMessage = splitMessage[i].trim().replaceAll(
-                "player",
-                playerName,
-              );
-              _dialogueQueue.add(
-                DialogueLine(character: character, text: currentMessage),
-              );
+              addDialogueQueue(character, splitMessage[i]);
             }
           } else {
-            _dialogueQueue.add(
-              DialogueLine(character: character, text: message),
-            );
+            addDialogueQueue(character, message);
           }
         }
       } else {
         print(utf8.decode(response.bodyBytes));
-        _dialogueQueue.add(
-          DialogueLine(character: '시스템', text: '대화 중 오류가 발생했습니다.'),
-        );
+        addErrorDialogueLine('서버와의 통신 중 오류가 발생했습니다.');
       }
     } catch (e) {
       print('서버와의 통신 중 오류 발생: $e');
-
-      _dialogueQueue.add(
-        DialogueLine(character: '시스템', text: '서버에 연결할 수 없습니다.'),
-      );
+      addErrorDialogueLine('서버와의 통신 중 오류가 발생했습니다.');
     }
 
     _playNextLine();
@@ -192,13 +177,10 @@ class GameScreenController {
       final data = jsonDecode(res.body);
       _sessionId = data['session_id'];
       getInitialEvent(eventId);
-      // _dialogueQueue.add(DialogueLine(character: '시스템', text: '세션이 시작되었습니다.'));
     } else {
       print('세션 시작 실패: ${res.statusCode}');
       print('응답 본문: ${utf8.decode(res.bodyBytes)}');
-      _dialogueQueue.add(
-        DialogueLine(character: '시스템', text: '세션 시작에 실패했습니다.'),
-      );
+      addErrorDialogueLine('세션 시작에 실패했습니다.');
     }
 
     _playNextLine();
@@ -232,18 +214,26 @@ class GameScreenController {
           character = '시스템';
         }
 
-        String currentMessage = text.trim().replaceAll("player", playerName);
-        _dialogueQueue.add(
-          DialogueLine(character: character, text: currentMessage),
-        );
+        addDialogueQueue(character, text);
       }
     } else {
       print('세션 시작 실패: ${res.statusCode}');
       print('응답 본문: ${res.body}');
-      _dialogueQueue.add(
-        DialogueLine(character: '시스템', text: '세션 시작에 실패했습니다.'),
-      );
+      addErrorDialogueLine('세션 시작에 실패했습니다.');
     }
+    _playNextLine();
+  }
+
+  void addDialogueQueue(String character, String text) {
+    String currentMessage = text.replaceAll("player", playerName);
+    _dialogueQueue.add(
+      DialogueLine(character: character, text: currentMessage),
+    );
+    _playNextLine();
+  }
+
+  void addErrorDialogueLine(String error) {
+    _dialogueQueue.add(DialogueLine(character: '시스템', text: '오류 발생: $error'));
     _playNextLine();
   }
 }

@@ -89,8 +89,8 @@ class GameScreenController {
           String character = text.split(':')[0];
           String message = text.split(':')[1].trim();
 
-          if (message.contains('\\n')) {
-            List<String> splitMessage = message.split('\\n');
+          if (message.contains('\n')) {
+            List<String> splitMessage = message.split('\n');
             for (var i = 0; i < splitMessage.length; i++) {
               addDialogueQueue(character, splitMessage[i]);
             }

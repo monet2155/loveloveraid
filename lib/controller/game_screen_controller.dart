@@ -30,8 +30,16 @@ class GameScreenController {
   final List<Npc> npcs;
 
   final Set<String> _appearedCharacters = {}; // 대화에 등장한 캐릭터 추적
+  final Set<String> _animatedCharacters = {};
 
   Set<String> get appearedCharacters => _appearedCharacters;
+
+  Set<String> get newlyAppearedCharacters =>
+      _appearedCharacters.difference(_animatedCharacters);
+
+  void markCharacterAsAnimated(String character) {
+    _animatedCharacters.add(character);
+  }
 
   GameScreenController({
     required this.playerName,

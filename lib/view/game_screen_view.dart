@@ -43,11 +43,10 @@ class GameScreenView extends StatelessWidget {
               // 캐릭터 이미지
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final characters = controller.appearedCharacters.toList();
-
-                  if (controller.currentCharacter == '시스템') {
-                    return Container();
-                  }
+                  final appearedCharacters =
+                      controller.appearedCharacters.toList();
+                  final newlyAppearedCharacters =
+                      controller.newlyAppearedCharacters.toList();
 
                   return Align(
                     alignment: Alignment.bottomCenter,
@@ -55,11 +54,14 @@ class GameScreenView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       mainAxisSize: MainAxisSize.max,
                       children:
-                          characters.map((character) {
+                          appearedCharacters.map((character) {
                             final isCurrent =
                                 character == controller.currentCharacter;
+                            final isNew = newlyAppearedCharacters.contains(
+                              character,
+                            );
 
-                            return SizedBox(
+                            final content = SizedBox(
                               width: 400,
                               child: Opacity(
                                 opacity: isCurrent ? 1.0 : 0.5,
@@ -78,71 +80,104 @@ class GameScreenView extends StatelessWidget {
                                 ),
                               ),
                             );
+
+                            if (isNew) {
+                              return TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                                onEnd:
+                                    () => controller.markCharacterAsAnimated(
+                                      character,
+                                    ),
+                                builder: (context, value, child) {
+                                  return Transform.translate(
+                                    offset: Offset(0, 50 * (1 - value)),
+                                    child: Opacity(
+                                      opacity: value,
+                                      child: content,
+                                    ),
+                                  );
+                                },
+                              );
+                            } else {
+                              return content;
+                            }
                           }).toList(),
                     ),
                   );
+
+                  // final characters = controller.appearedCharacters.toList();
+
+                  // return Align(
+                  //   alignment: Alignment.bottomCenter,
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  //     mainAxisSize: MainAxisSize.max,
+                  //     children:
+                  //         characters.map((character) {
+                  //           return AnimatedSwitcher(
+                  //             duration: const Duration(milliseconds: 400),
+                  //             switchInCurve: Curves.easeOut,
+                  //             child: Row(
+                  //               key: ValueKey(
+                  //                 controller.appearedCharacters.length,
+                  //               ),
+                  //               mainAxisAlignment:
+                  //                   MainAxisAlignment.spaceEvenly,
+                  //               children:
+                  //                   characters.map((character) {
+                  //                     final isCurrent =
+                  //                         character ==
+                  //                         controller.currentCharacter;
+
+                  //                     return TweenAnimationBuilder<double>(
+                  //                       tween: Tween(begin: 0.0, end: 1.0),
+                  //                       duration: const Duration(
+                  //                         milliseconds: 500,
+                  //                       ),
+                  //                       curve: Curves.easeOut,
+                  //                       builder: (context, value, child) {
+                  //                         return Transform.translate(
+                  //                           offset: Offset(
+                  //                             0,
+                  //                             50 * (1 - value),
+                  //                           ), // 아래서 올라오는 느낌
+                  //                           child: Opacity(
+                  //                             opacity:
+                  //                                 isCurrent
+                  //                                     ? value
+                  //                                     : value * 0.8,
+                  //                             child: Transform.scale(
+                  //                               scale: 1.5,
+                  //                               child: SizedBox(
+                  //                                 width: 400,
+                  //                                 child: ClipRect(
+                  //                                   child: Align(
+                  //                                     alignment:
+                  //                                         Alignment.topCenter,
+                  //                                     heightFactor: 0.7,
+                  //                                     child: Image.asset(
+                  //                                       'assets/images/${character}_black.png',
+                  //                                       fit: BoxFit.contain,
+                  //                                     ),
+                  //                                   ),
+                  //                                 ),
+                  //                               ),
+                  //                             ),
+                  //                           ),
+                  //                         );
+                  //                       },
+                  //                     );
+                  //                   }).toList(),
+                  //             ),
+                  //           );
+                  //         }).toList(),
+                  //   ),
+                  // );
                 },
               ),
 
-              // LayoutBuilder(
-              //   builder: (context, constraints) {
-              //     final characters = controller.appearedCharacters.toList();
-
-              //     if (controller.currentCharacter == '시스템') {
-              //       return Container();
-              //     }
-
-              //     return Stack(
-              //       children:
-              //           characters.map((character) {
-              //             final index = characters.indexOf(character);
-              //             final alignment =
-              //                 alignments.length >= characters.length
-              //                     ? alignments[index]
-              //                     : Alignment.bottomCenter;
-
-              //             return Align(
-              //               alignment: alignment,
-              //               child: SizedBox(
-              //                 width: 400,
-              //                 child: Transform.scale(
-              //                   scale: 1.5,
-              //                   child: ClipRect(
-              //                     child: Align(
-              //                       alignment: Alignment.topCenter,
-              //                       heightFactor: 0.7,
-              //                       child: Image.asset(
-              //                         'assets/images/${character}_black.png',
-              //                         fit: BoxFit.contain,
-              //                       ),
-              //                     ),
-              //                   ),
-              //                 ),
-              //               ),
-              //             );
-              //           }).toList(),
-              //     );
-              //   },
-              // ),
-
-              // controller.currentCharacter != '시스템'
-              //     ? Align(
-              //       alignment: Alignment.bottomCenter,
-              //       child: Transform.scale(
-              //         scale: 1.5,
-              //         child: ClipRect(
-              //           child: Align(
-              //             alignment: Alignment.topCenter,
-              //             heightFactor: 0.7,
-              //             child: Image.asset(
-              //               'assets/images/${controller.currentCharacter}_black.png',
-              //               fit: BoxFit.contain,
-              //             ),
-              //           ),
-              //         ),
-              //       ),
-              //     )
-              //     : Container(),
               // 대화창/입력창
               Positioned(
                 left: 0,

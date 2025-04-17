@@ -50,60 +50,77 @@ class GameScreenView extends StatelessWidget {
 
                   return Align(
                     alignment: Alignment.bottomCenter,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      mainAxisSize: MainAxisSize.max,
-                      children:
-                          appearedCharacters.map((character) {
-                            final isCurrent =
-                                character == controller.currentCharacter;
-                            final isNew = newlyAppearedCharacters.contains(
-                              character,
-                            );
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      switchInCurve: Curves.easeInOut,
+                      layoutBuilder: (currentChild, previousChildren) {
+                        return Stack(
+                          children: <Widget>[
+                            ...previousChildren,
+                            if (currentChild != null) currentChild,
+                          ],
+                        );
+                      },
+                      child: Row(
+                        key: ValueKey(
+                          controller.appearedCharacters.join(','),
+                        ), // 위치 변화를 감지
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisSize: MainAxisSize.max,
+                        children:
+                            appearedCharacters.map((character) {
+                              final isCurrent =
+                                  character == controller.currentCharacter;
+                              final isNew = newlyAppearedCharacters.contains(
+                                character,
+                              );
 
-                            final content = SizedBox(
-                              width: 400,
-                              child: Opacity(
-                                opacity: isCurrent ? 1.0 : 0.5,
-                                child: Transform.scale(
-                                  scale: 1.5,
-                                  child: ClipRect(
-                                    child: Align(
-                                      alignment: Alignment.topCenter,
-                                      heightFactor: 0.7,
-                                      child: Image.asset(
-                                        'assets/images/${character}_black.png',
-                                        fit: BoxFit.contain,
+                              final content = SizedBox(
+                                key: ValueKey('char_$character'),
+                                width: 400,
+                                child: Opacity(
+                                  opacity: isCurrent ? 1.0 : 0.5,
+                                  child: Transform.scale(
+                                    scale: 1.5,
+                                    child: ClipRect(
+                                      child: Align(
+                                        alignment: Alignment.topCenter,
+                                        heightFactor: 0.7,
+                                        child: Image.asset(
+                                          'assets/images/${character}_color.png',
+                                          fit: BoxFit.contain,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-
-                            if (isNew) {
-                              return TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                duration: const Duration(milliseconds: 500),
-                                curve: Curves.easeOut,
-                                onEnd:
-                                    () => controller.markCharacterAsAnimated(
-                                      character,
-                                    ),
-                                builder: (context, value, child) {
-                                  return Transform.translate(
-                                    offset: Offset(0, 50 * (1 - value)),
-                                    child: Opacity(
-                                      opacity: value,
-                                      child: content,
-                                    ),
-                                  );
-                                },
                               );
-                            } else {
-                              return content;
-                            }
-                          }).toList(),
+
+                              if (isNew) {
+                                return TweenAnimationBuilder<double>(
+                                  key: ValueKey('anim_$character'),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  duration: const Duration(milliseconds: 500),
+                                  curve: Curves.easeOut,
+                                  onEnd:
+                                      () => controller.markCharacterAsAnimated(
+                                        character,
+                                      ),
+                                  builder: (context, value, child) {
+                                    return Transform.translate(
+                                      offset: Offset(0, 50 * (1 - value)),
+                                      child: Opacity(
+                                        opacity: value,
+                                        child: content,
+                                      ),
+                                    );
+                                  },
+                                );
+                              } else {
+                                return content;
+                              }
+                            }).toList(),
+                      ),
                     ),
                   );
                 },

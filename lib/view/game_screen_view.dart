@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 
+final alignments = [
+  Alignment.bottomCenter,
+  Alignment.bottomLeft,
+  Alignment.bottomRight,
+];
+
 class GameScreenView extends StatelessWidget {
   final GameScreenController controller;
   final TextEditingController textController;
@@ -35,24 +41,108 @@ class GameScreenView extends StatelessWidget {
               // 배경
               Positioned.fill(child: Container(color: Colors.white)),
               // 캐릭터 이미지
-              controller.currentCharacter != '시스템'
-                  ? Align(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final characters = controller.appearedCharacters.toList();
+
+                  if (controller.currentCharacter == '시스템') {
+                    return Container();
+                  }
+
+                  return Align(
                     alignment: Alignment.bottomCenter,
-                    child: Transform.scale(
-                      scale: 1.5,
-                      child: ClipRect(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 0.7,
-                          child: Image.asset(
-                            'assets/images/${controller.currentCharacter}_black.png',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisSize: MainAxisSize.max,
+                      children:
+                          characters.map((character) {
+                            final isCurrent =
+                                character == controller.currentCharacter;
+
+                            return SizedBox(
+                              width: 400,
+                              child: Opacity(
+                                opacity: isCurrent ? 1.0 : 0.5,
+                                child: Transform.scale(
+                                  scale: 1.5,
+                                  child: ClipRect(
+                                    child: Align(
+                                      alignment: Alignment.topCenter,
+                                      heightFactor: 0.7,
+                                      child: Image.asset(
+                                        'assets/images/${character}_black.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                     ),
-                  )
-                  : Container(),
+                  );
+                },
+              ),
+
+              // LayoutBuilder(
+              //   builder: (context, constraints) {
+              //     final characters = controller.appearedCharacters.toList();
+
+              //     if (controller.currentCharacter == '시스템') {
+              //       return Container();
+              //     }
+
+              //     return Stack(
+              //       children:
+              //           characters.map((character) {
+              //             final index = characters.indexOf(character);
+              //             final alignment =
+              //                 alignments.length >= characters.length
+              //                     ? alignments[index]
+              //                     : Alignment.bottomCenter;
+
+              //             return Align(
+              //               alignment: alignment,
+              //               child: SizedBox(
+              //                 width: 400,
+              //                 child: Transform.scale(
+              //                   scale: 1.5,
+              //                   child: ClipRect(
+              //                     child: Align(
+              //                       alignment: Alignment.topCenter,
+              //                       heightFactor: 0.7,
+              //                       child: Image.asset(
+              //                         'assets/images/${character}_black.png',
+              //                         fit: BoxFit.contain,
+              //                       ),
+              //                     ),
+              //                   ),
+              //                 ),
+              //               ),
+              //             );
+              //           }).toList(),
+              //     );
+              //   },
+              // ),
+
+              // controller.currentCharacter != '시스템'
+              //     ? Align(
+              //       alignment: Alignment.bottomCenter,
+              //       child: Transform.scale(
+              //         scale: 1.5,
+              //         child: ClipRect(
+              //           child: Align(
+              //             alignment: Alignment.topCenter,
+              //             heightFactor: 0.7,
+              //             child: Image.asset(
+              //               'assets/images/${controller.currentCharacter}_black.png',
+              //               fit: BoxFit.contain,
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //     )
+              //     : Container(),
               // 대화창/입력창
               Positioned(
                 left: 0,

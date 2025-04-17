@@ -9,6 +9,8 @@ import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/model/step.dart';
 import 'package:just_audio/just_audio.dart';
 
+const USING_TTS = false;
+
 class GameScreenController {
   final String playerName;
   final Function onUpdate;
@@ -123,7 +125,7 @@ class GameScreenController {
 
     if (currentCharacter != '시스템') {
       _appearedCharacters.add(currentCharacter); // 등장 캐릭터 추적
-      if (kDebugMode) {
+      if (kDebugMode && USING_TTS) {
         playTTS(fullText);
       }
     }

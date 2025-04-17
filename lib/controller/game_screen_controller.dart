@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/model/step.dart';
+import 'package:just_audio/just_audio.dart';
 
 class GameScreenController {
   final String playerName;
@@ -36,6 +38,7 @@ class GameScreenController {
 
   Set<String> get newlyAppearedCharacters =>
       _appearedCharacters.difference(_animatedCharacters);
+  final player = AudioPlayer();
 
   void markCharacterAsAnimated(String character) {
     _animatedCharacters.add(character);
@@ -120,6 +123,9 @@ class GameScreenController {
 
     if (currentCharacter != '시스템') {
       _appearedCharacters.add(currentCharacter); // 등장 캐릭터 추적
+      if (kDebugMode) {
+        playTTS(fullText);
+      }
     }
 
     _textTimer?.cancel();
@@ -251,5 +257,58 @@ class GameScreenController {
 
   void addErrorDialogueLine(String error) {
     _dialogueQueue.add(DialogueLine(character: '시스템', text: '오류 발생: $error'));
+  }
+
+  void playTTS(String text) async {
+    // List<String> voiceId = [
+    //   "1kp14rfpALfa8DPVZDEPze",
+    // ]
+
+    final apiUrl = dotenv.env['SUPERTONE_API_URL'];
+    final res = await http.post(
+      Uri.parse("$apiUrl/text-to-speech/1kp14rfpALfa8DPVZDEPze"),
+      headers: {
+        'x-sup-api-key': dotenv.env['SUPERTONE_API_KEY']!,
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "language": "ko",
+        "text": text,
+        "model": "turbo",
+        "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 2},
+      }),
+    );
+
+    if (res.statusCode == 200) {
+      try {
+        final bytes = res.bodyBytes;
+
+        await player.setAudioSource(MyCustomSource(bytes));
+        await player.play();
+      } catch (e) {
+        print("오디오 재생 실패: $e");
+      }
+    } else {
+      print('TTS 요청 실패: ${res.statusCode}');
+      print('응답 본문: ${res.body}');
+    }
+  }
+}
+
+class MyCustomSource extends StreamAudioSource {
+  final List<int> bytes;
+  MyCustomSource(this.bytes);
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    start ??= 0;
+    end ??= bytes.length;
+    return StreamAudioResponse(
+      sourceLength: bytes.length,
+      contentLength: end - start,
+      offset: start,
+      stream: Stream.value(bytes.sublist(start, end)),
+      contentType: 'audio/wav',
+    );
   }
 }

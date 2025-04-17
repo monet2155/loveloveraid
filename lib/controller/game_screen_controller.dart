@@ -29,6 +29,10 @@ class GameScreenController {
 
   final List<Npc> npcs;
 
+  final Set<String> _appearedCharacters = {}; // 대화에 등장한 캐릭터 추적
+
+  Set<String> get appearedCharacters => _appearedCharacters;
+
   GameScreenController({
     required this.playerName,
     required this.onUpdate,
@@ -37,6 +41,7 @@ class GameScreenController {
 
   Future<void> init() async {
     await initSession();
+    _appearedCharacters.clear();
   }
 
   Future<void> sendPlayerMessage(String message) async {
@@ -104,6 +109,10 @@ class GameScreenController {
     _visibleText = '';
     final fullText = _currentLine!.text;
     int charIndex = 0;
+
+    if (currentCharacter != '시스템') {
+      _appearedCharacters.add(currentCharacter); // 등장 캐릭터 추적
+    }
 
     _textTimer?.cancel();
     _textTimer = Timer.periodic(textSpeed, (timer) {
@@ -226,6 +235,7 @@ class GameScreenController {
 
   void addDialogueQueue(String character, String text) {
     String currentMessage = text.replaceAll("player", playerName);
+
     _dialogueQueue.add(
       DialogueLine(character: character, text: currentMessage),
     );

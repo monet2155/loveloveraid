@@ -71,7 +71,10 @@ class _TitleScreenState extends State<TitleScreen> {
                         builder:
                             (context) => GameScreen(
                               npcs: npcs,
-                              playerName: nameController.text, // 플레이어 이름 전달
+                              playerName:
+                                  nameController.text.isEmpty
+                                      ? "김겜돌"
+                                      : nameController.text, // 플레이어 이름 전달
                             ),
                       ),
                     );

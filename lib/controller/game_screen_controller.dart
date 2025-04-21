@@ -77,7 +77,6 @@ class GameScreenController {
 
       if (response.statusCode == 200) {
         final decodedBody = json.decode(utf8.decode(response.bodyBytes));
-        print('서버 응답: ${decodedBody}');
         final Map<String, dynamic> data = decodedBody;
         if (data['dialogue'] == null) {
           addErrorDialogueLine('서버에서 대화 내용을 가져오지 못했습니다.');
@@ -220,12 +219,10 @@ class GameScreenController {
 
     if (res.statusCode == 200) {
       final decodedBody = json.decode(utf8.decode(res.bodyBytes));
-      print('서버 응답: ${decodedBody}');
       final Map<String, dynamic> data = decodedBody;
       List steps = data["steps"];
 
       for (var step in steps) {
-        print('step: $step');
         Step stepData = Step.fromJson(step);
         String text = stepData.message;
         String speakerType = stepData.speakerType;

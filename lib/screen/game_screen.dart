@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/model/npc.dart';
+import 'package:loveloveraid/screen/end_screen.dart';
 import 'package:loveloveraid/view/game_screen_view.dart';
 
 class GameScreen extends StatefulWidget {
@@ -25,8 +26,15 @@ class _GameScreenState extends State<GameScreen> {
     super.initState();
     _controller = GameScreenController(
       onUpdate: () => setState(() {}),
-      npcs: widget.npcs,
+      onEndChapter: () {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => EndScreen(message: "THE END"),
+          ),
+        );
+      },
       playerName: widget.playerName,
+      npcs: widget.npcs,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

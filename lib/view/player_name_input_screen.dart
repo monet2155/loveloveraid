@@ -36,7 +36,7 @@ class PlayerNameInputScreen extends StatelessWidget {
                   style: TextStyle(color: Colors.pink.shade400), // 텍스트 색상 변경
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
-                    hintText: '이름',
+                    hintText: '김겜돌',
                     hintStyle: TextStyle(color: Colors.pink.shade200),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12), // 둥근 테두리

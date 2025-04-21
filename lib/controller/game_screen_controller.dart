@@ -14,6 +14,7 @@ const USING_TTS = false;
 class GameScreenController {
   final String playerName;
   final Function onUpdate;
+  final Function onEndChapter;
 
   final List<DialogueLine> _dialogueQueue = [];
   bool _isDialoguePlaying = false;
@@ -49,6 +50,7 @@ class GameScreenController {
   GameScreenController({
     required this.playerName,
     required this.onUpdate,
+    required this.onEndChapter,
     required this.npcs,
   });
 
@@ -85,6 +87,11 @@ class GameScreenController {
 
         List<String> dialogueList = data['dialogue'].split("\n\n");
         for (var text in dialogueList) {
+          if (text == "**!!END!!**") {
+            addDialogueQueue('시스템', '대화가 종료되었습니다.');
+            break;
+          }
+
           String character = text.split(':')[0];
           String message = text.split(':')[1].trim();
 
@@ -120,6 +127,10 @@ class GameScreenController {
     _currentLine = _dialogueQueue.removeAt(0);
     _visibleText = '';
     final fullText = _currentLine!.text;
+    if (fullText == "대화가 종료되었습니다.") {
+      onEndChapter();
+      return;
+    }
     int charIndex = 0;
 
     if (currentCharacter != '시스템') {

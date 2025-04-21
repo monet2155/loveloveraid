@@ -15,10 +15,11 @@ void main() async {
   }
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    const size = Size(1280, 720);
+    const minSize = Size(1280, 720);
+    const maxSize = Size(1920, 1080);
     setWindowTitle('러브러브 레이드');
-    setWindowMinSize(size);
-    setWindowMaxSize(size); // 최소, 최대를 같게 설정 → 리사이징 불가
+    setWindowMinSize(minSize);
+    setWindowMaxSize(maxSize);
   }
 
   runApp(const MainApp());

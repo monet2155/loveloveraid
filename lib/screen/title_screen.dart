@@ -40,7 +40,6 @@ class _TitleScreenState extends State<TitleScreen> {
 
     if (res.statusCode == 200) {
       final decodedBody = json.decode(utf8.decode(res.bodyBytes));
-      print('서버 응답: ${decodedBody}');
       final Map<String, dynamic> data = decodedBody;
       setState(() {
         for (var npc in data['npcs']) {

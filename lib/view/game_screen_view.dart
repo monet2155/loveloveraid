@@ -50,84 +50,91 @@ class GameScreenView extends StatelessWidget {
               // 캐릭터 이미지
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final appearedCharacters =
-                      controller.appearedCharacters.toList();
+                  final appearedCharacters = List<String>.from(
+                    controller.appearedCharacters,
+                  ); // 복사본
+
+                  if (appearedCharacters.length == 2) {
+                    // 이서아를 가운데로 배치
+                    appearedCharacters.remove('이서아');
+                    appearedCharacters.insert(1, '이서아');
+                  } else if (appearedCharacters.length == 3) {
+                    // 이서아를 가운데로 배치
+                    appearedCharacters.remove('이서아');
+                    appearedCharacters.insert(1, '이서아');
+                  }
+
                   final newlyAppearedCharacters =
                       controller.newlyAppearedCharacters.toList();
 
+                  final orderedRenderedCharacters =
+                      appearedCharacters.map((character) => character).toList();
+                  orderedRenderedCharacters.sort((a, b) {
+                    // 이서아를 항상 처음으로
+                    if (a == '이서아') return -1;
+                    if (b == '이서아') return 1;
+                    // 그 외 캐릭터는 알아서 렌더링
+                    return a.compareTo(b);
+                  });
+
                   return Align(
                     alignment: Alignment.bottomCenter,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      switchInCurve: Curves.easeInOut,
-                      layoutBuilder: (currentChild, previousChildren) {
-                        return Stack(
-                          children: <Widget>[
-                            ...previousChildren,
-                            if (currentChild != null) currentChild,
-                          ],
-                        );
-                      },
-                      child: Row(
-                        key: ValueKey(
-                          controller.appearedCharacters.join(','),
-                        ), // 위치 변화를 감지
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        mainAxisSize: MainAxisSize.max,
-                        children:
-                            appearedCharacters.map((character) {
-                              final isCurrent =
-                                  character == controller.currentCharacter;
-                              final isNew = newlyAppearedCharacters.contains(
-                                character,
-                              );
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children:
+                          orderedRenderedCharacters.map((character) {
+                            final index = appearedCharacters.indexOf(character);
+                            final total = appearedCharacters.length;
+                            // 1명일땐 0, 2명일땐 조금 넓게, 3명일땐 좁게
+                            final padding = constraints.maxWidth / total;
+                            final offsetX = (index - (total - 1) / 2) * padding;
+                            final isNew = newlyAppearedCharacters.contains(
+                              character,
+                            );
 
-                              final content = SizedBox(
-                                key: ValueKey('char_$character'),
-                                width: 400,
-                                child: Opacity(
-                                  opacity: isCurrent ? 1.0 : 0.5,
-                                  child: Transform.scale(
-                                    scale: 1.5,
-                                    child: ClipRect(
-                                      child: Align(
-                                        alignment: Alignment.topCenter,
-                                        heightFactor: 0.7,
-                                        child: Image.asset(
-                                          'assets/images/${character}_color.png',
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
+                            final baseContent = Transform.translate(
+                              offset: Offset(offsetX, 0),
+                              child: Transform.scale(
+                                scale: 3.0,
+                                child: SizedBox(
+                                  key: ValueKey('char_$character'),
+                                  width: 450,
+                                  child: Align(
+                                    alignment: Alignment.topCenter,
+                                    heightFactor: 0.5,
+                                    child: Image.asset(
+                                      'assets/images/${character}_color.png',
+                                      fit: BoxFit.contain,
                                     ),
                                   ),
                                 ),
-                              );
+                              ),
+                            );
 
-                              if (isNew) {
-                                return TweenAnimationBuilder<double>(
-                                  key: ValueKey('anim_$character'),
-                                  tween: Tween(begin: 0.0, end: 1.0),
-                                  duration: const Duration(milliseconds: 500),
-                                  curve: Curves.easeOut,
-                                  onEnd:
-                                      () => controller.markCharacterAsAnimated(
-                                        character,
-                                      ),
-                                  builder: (context, value, child) {
-                                    return Transform.translate(
+                            if (isNew) {
+                              return TweenAnimationBuilder<double>(
+                                key: ValueKey('anim_$character'),
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                                onEnd:
+                                    () => controller.markCharacterAsAnimated(
+                                      character,
+                                    ),
+                                builder: (context, value, child) {
+                                  return Opacity(
+                                    opacity: value,
+                                    child: Transform.translate(
                                       offset: Offset(0, 50 * (1 - value)),
-                                      child: Opacity(
-                                        opacity: value,
-                                        child: content,
-                                      ),
-                                    );
-                                  },
-                                );
-                              } else {
-                                return content;
-                              }
-                            }).toList(),
-                      ),
+                                      child: baseContent,
+                                    ),
+                                  );
+                                },
+                              );
+                            } else {
+                              return baseContent;
+                            }
+                          }).toList(),
                     ),
                   );
                 },

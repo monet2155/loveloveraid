@@ -153,6 +153,14 @@ class GameScreenController {
         _isWaitingForTap = true;
         _isDialoguePlaying = false;
         onUpdate();
+
+        if (_dialogueQueue.isEmpty) {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (_isWaitingForTap) {
+              skipOrNext();
+            }
+          });
+        }
       }
     });
   }

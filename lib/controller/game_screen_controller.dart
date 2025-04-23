@@ -136,7 +136,10 @@ class GameScreenController {
     if (currentCharacter != '시스템') {
       _appearedCharacters.add(currentCharacter); // 등장 캐릭터 추적
       if (kDebugMode && USING_TTS) {
-        playTTS(fullText);
+        if (player.playing) {
+          player.stop();
+        }
+        playTTS(currentCharacter, fullText);
       }
     }
 
@@ -269,14 +272,18 @@ class GameScreenController {
     _dialogueQueue.add(DialogueLine(character: '시스템', text: '오류 발생: $error'));
   }
 
-  void playTTS(String text) async {
-    // List<String> voiceId = [
-    //   "1kp14rfpALfa8DPVZDEPze",
-    // ]
+  void playTTS(String character, String text) async {
+    List<Map> voiceId = [
+      {"name": "이서아", "id": "hkzbhWknLqbwz8Jw8RYVyV"},
+      {"name": "강지연", "id": "c1fEJ6TaHYha7ACMr7Cj3r"},
+      {"name": "윤하린", "id": "gdvdX3oHN69chfYqyro9UE"},
+    ];
 
     final apiUrl = dotenv.env['SUPERTONE_API_URL'];
     final res = await http.post(
-      Uri.parse("$apiUrl/text-to-speech/1kp14rfpALfa8DPVZDEPze"),
+      Uri.parse(
+        "$apiUrl/text-to-speech/${voiceId.firstWhere((v) => v['name'] == character)['id']}",
+      ),
       headers: {
         'x-sup-api-key': dotenv.env['SUPERTONE_API_KEY']!,
         'Content-Type': 'application/json',
@@ -285,7 +292,7 @@ class GameScreenController {
         "language": "ko",
         "text": text,
         "model": "turbo",
-        "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 2},
+        "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 1},
       }),
     );
 

@@ -39,7 +39,14 @@ class GameScreenView extends StatelessWidget {
           body: Stack(
             children: [
               // 배경
-              Positioned.fill(child: Container(color: Colors.white)),
+              // Positioned.fill(child: Container(color: Colors.white)),
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/background.jpg',
+                  fit: BoxFit.cover,
+                ),
+              ),
+
               // 캐릭터 이미지
               LayoutBuilder(
                 builder: (context, constraints) {

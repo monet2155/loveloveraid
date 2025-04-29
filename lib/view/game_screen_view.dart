@@ -7,7 +7,7 @@ final alignments = [
   Alignment.bottomRight,
 ];
 
-class GameScreenView extends StatelessWidget {
+class GameScreenView extends StatefulWidget {
   final GameScreenController controller;
   final TextEditingController textController;
   final FocusNode keyboardFocusNode;
@@ -26,13 +26,43 @@ class GameScreenView extends StatelessWidget {
   });
 
   @override
+  State<GameScreenView> createState() => _GameScreenViewState();
+}
+
+class _GameScreenViewState extends State<GameScreenView> {
+  bool isVoiceMode = false; // ✨ 모드 상태 추가
+  String recognizedText = '';
+
+  void _toggleVoiceMode() {
+    setState(() {
+      isVoiceMode = !isVoiceMode;
+      if (isVoiceMode) {
+        _startVoiceRecognition();
+      } else {
+        _stopVoiceRecognition();
+      }
+    });
+  }
+
+  void _startVoiceRecognition() {
+    print('🎤 음성 인식 시작');
+    // 여기 STT 스트림을 시작해서 인식 결과를 실시간 업데이트
+    // 예시: STT 라이브러리로 recognizedText를 계속 setState로 갱신
+  }
+
+  void _stopVoiceRecognition() {
+    print('🛑 음성 인식 종료');
+    // 여기 STT 종료 코드 연결
+  }
+
+  @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      focusNode: keyboardFocusNode,
-      onKeyEvent: onKeyEvent,
+      focusNode: widget.keyboardFocusNode,
+      onKeyEvent: widget.onKeyEvent,
       autofocus: true,
       child: GestureDetector(
-        onTap: controller.skipOrNext,
+        onTap: widget.controller.skipOrNext,
         behavior: HitTestBehavior.translucent,
         child: Scaffold(
           backgroundColor: Colors.black,
@@ -58,7 +88,7 @@ class GameScreenView extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final appearedCharacters = List<String>.from(
-          controller.appearedCharacters,
+          widget.controller.appearedCharacters,
         );
 
         if (appearedCharacters.length == 2 || appearedCharacters.length == 3) {
@@ -67,7 +97,7 @@ class GameScreenView extends StatelessWidget {
         }
 
         final newlyAppearedCharacters =
-            controller.newlyAppearedCharacters.toList();
+            widget.controller.newlyAppearedCharacters.toList();
         final orderedRenderedCharacters =
             appearedCharacters.map((character) => character).toList();
         orderedRenderedCharacters.sort((a, b) {
@@ -114,7 +144,9 @@ class GameScreenView extends StatelessWidget {
                       duration: const Duration(milliseconds: 500),
                       curve: Curves.easeOut,
                       onEnd:
-                          () => controller.markCharacterAsAnimated(character),
+                          () => widget.controller.markCharacterAsAnimated(
+                            character,
+                          ),
                       builder: (context, value, child) {
                         return Opacity(
                           opacity: value,
@@ -145,7 +177,7 @@ class GameScreenView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildDialogBox(),
-          controller.canSendMessage
+          widget.controller.canSendMessage
               ? _buildInputBox()
               : Container(margin: const EdgeInsets.only(top: 16)),
         ],
@@ -169,7 +201,7 @@ class GameScreenView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              controller.currentCharacter,
+              widget.controller.currentCharacter,
               style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 16,
@@ -178,7 +210,7 @@ class GameScreenView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              controller.visibleText,
+              widget.controller.visibleText,
               style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
           ],
@@ -199,20 +231,28 @@ class GameScreenView extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
-              controller: textController,
-              focusNode: textFieldFocusNode,
+              controller: widget.textController,
+              focusNode: widget.textFieldFocusNode,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: '메시지를 입력하세요',
                 hintStyle: TextStyle(color: Colors.white38),
                 border: InputBorder.none,
               ),
-              onSubmitted: (_) => onSend(),
+              onSubmitted: (_) => widget.onSend(),
             ),
           ),
           IconButton(
+            icon: Icon(
+              Icons.mic,
+              color:
+                  isVoiceMode ? Colors.redAccent : Colors.white, // ✨ 활성화 시 빨간색
+            ),
+            onPressed: _toggleVoiceMode,
+          ),
+          IconButton(
             icon: const Icon(Icons.send, color: Colors.white),
-            onPressed: onSend,
+            onPressed: widget.onSend,
           ),
         ],
       ),

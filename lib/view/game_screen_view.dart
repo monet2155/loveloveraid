@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_speech/endless_streaming_service.dart';
+import 'package:google_speech/google_speech.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
+import 'package:record/record.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 final alignments = [
   Alignment.bottomCenter,
@@ -31,7 +35,9 @@ class GameScreenView extends StatefulWidget {
 
 class _GameScreenViewState extends State<GameScreenView> {
   bool isVoiceMode = false; // ✨ 모드 상태 추가
-  String recognizedText = '';
+
+  Stream<List<int>> micStream = Stream.empty(); // ✨ 음성 인식 스트림 초기화
+  AudioRecorder audioRecorder = AudioRecorder();
 
   void _toggleVoiceMode() {
     setState(() {
@@ -44,15 +50,67 @@ class _GameScreenViewState extends State<GameScreenView> {
     });
   }
 
-  void _startVoiceRecognition() {
+  void _startVoiceRecognition() async {
     print('🎤 음성 인식 시작');
-    // 여기 STT 스트림을 시작해서 인식 결과를 실시간 업데이트
-    // 예시: STT 라이브러리로 recognizedText를 계속 setState로 갱신
+
+    if (!(await audioRecorder.hasPermission())) {
+      print('🛑 음성 인식 권한 없음');
+      return;
+    }
+
+    micStream = await audioRecorder.startStream(
+      RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 16000,
+        numChannels: 1,
+      ),
+    );
+
+    final json = await rootBundle.loadString('assets/service_account.json');
+    final serviceAccount = ServiceAccount.fromString(json);
+
+    final speechToText = EndlessStreamingService.viaServiceAccount(
+      serviceAccount,
+    );
+
+    final config = RecognitionConfig(
+      encoding: AudioEncoding.LINEAR16,
+      model: RecognitionModel.basic,
+      enableAutomaticPunctuation: true,
+      sampleRateHertz: 16000,
+      languageCode: 'ko-KR',
+    );
+
+    final responseStream = speechToText.endlessStream;
+
+    speechToText.endlessStreamingRecognize(
+      StreamingRecognitionConfig(config: config, interimResults: true),
+      micStream,
+    );
+
+    responseStream.listen((data) {
+      // https://github.com/felixjunghans/google_speech/blob/master/example/endless_streaming_example/lib/main.dart
+      final currentText = data.results
+          .where((e) => e.alternatives.isNotEmpty)
+          .map((e) => e.alternatives.first.transcript)
+          .join('\n');
+
+      if (data.results.first.isFinal) {
+        widget.textController.text += currentText;
+      }
+    }, onDone: () {});
   }
 
   void _stopVoiceRecognition() {
     print('🛑 음성 인식 종료');
     // 여기 STT 종료 코드 연결
+    audioRecorder.stop();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    audioRecorder.dispose();
   }
 
   @override

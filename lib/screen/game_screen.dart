@@ -27,11 +27,9 @@ class _GameScreenState extends State<GameScreen> {
     _controller = GameScreenController(
       onUpdate: () => setState(() {}),
       onEndChapter: () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => EndScreen(message: "THE END"),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (context) => EndScreen()));
       },
       playerName: widget.playerName,
       npcs: widget.npcs,

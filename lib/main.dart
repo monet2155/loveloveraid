@@ -35,7 +35,7 @@ class MainApp extends StatelessWidget {
       title: '러브러브 레이드',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'NanumGothic', brightness: Brightness.dark),
-      home: const EndScreen(message: ""), //const TitleScreen(),
+      home: const EndScreen(), //const TitleScreen(),
     );
   }
 }

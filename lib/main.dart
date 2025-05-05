@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:loveloveraid/screen/end_screen.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:window_size/window_size.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ 추가
@@ -35,7 +34,7 @@ class MainApp extends StatelessWidget {
       title: '러브러브 레이드',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'NanumGothic', brightness: Brightness.dark),
-      home: const EndScreen(), //const TitleScreen(),
+      home: const TitleScreen(),
     );
   }
 }

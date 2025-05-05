@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loveloveraid/screen/title_screen.dart';
 
 class EndScreen extends StatelessWidget {
   const EndScreen({Key? key}) : super(key: key);
@@ -70,7 +71,14 @@ class EndScreen extends StatelessWidget {
                     width: 220,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed:
+                          () => Navigator.of(context).pushAndRemoveUntil(
+                            // 처음 화면으로 돌아가기
+                            MaterialPageRoute(
+                              builder: (context) => const TitleScreen(),
+                            ),
+                            (route) => false,
+                          ),
                       style: ElevatedButton.styleFrom(
                         elevation: 10,
                         shadowColor: Colors.pinkAccent.withOpacity(0.4),

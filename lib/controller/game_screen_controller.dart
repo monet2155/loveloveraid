@@ -195,16 +195,15 @@ class GameScreenController {
   Future<void> initSession() async {
     final universeId = dotenv.env['UNIVERSE_ID'];
     final apiUrl = dotenv.env['API_URL'];
+    final eventId = dotenv.env['EVENT_ID'];
 
-    if (universeId == null || apiUrl == null) {
+    if (universeId == null || apiUrl == null || eventId == null) {
       _dialogueQueue.add(
         DialogueLine(character: '시스템', text: '환경변수가 누락되었습니다.'),
       );
       _playNextLine();
       return;
     }
-
-    final eventId = "1c1fc5d6-9d97-42a1-834a-cee27add99c1";
 
     final playerId =
         '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1'; // 이후 실제 사용자 ID 연동 가능

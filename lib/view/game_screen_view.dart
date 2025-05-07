@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 
 final alignments = [
@@ -189,66 +190,91 @@ class GameScreenView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  controller.currentCharacter,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  controller.visibleText,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                ),
+                controller.isLoading
+                    ? Container()
+                    : Text(
+                      controller.currentCharacter,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                controller.isLoading ? Container() : SizedBox(height: 8),
+                controller.isLoading
+                    ? _buildThreeDotsAnimation()
+                    : Text(
+                      controller.visibleText,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
               ],
             ),
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_back_ios,
-                    color:
-                        controller.canGoToPreviousMessage
-                            ? Colors.white
-                            : Colors.white30,
-                    size: 20,
-                  ),
-                  onPressed:
-                      controller.canGoToPreviousMessage
-                          ? controller.goToPreviousMessage
-                          : null,
-                  tooltip: '이전 대화',
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.arrow_forward_ios,
-                    color:
-                        controller.canSendMessage
-                            ? Colors.white30
-                            : controller.isInHistoryView
-                            ? Colors.white
-                            : Colors.white30,
-                    size: 20,
-                  ),
-                  onPressed:
-                      controller.canSendMessage
-                          ? null
-                          : controller.isInHistoryView
-                          ? controller.goToNextMessage
-                          : controller.skipOrNext,
-                  tooltip: '다음 대화',
-                ),
-              ],
+          controller.isLoading ? Container() : _buildHistoryButtonMenu(),
+        ],
+      ),
+    );
+  }
+
+  Positioned _buildHistoryButtonMenu() {
+    return Positioned(
+      top: 0,
+      right: 0,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.arrow_back_ios,
+              color:
+                  controller.canGoToPreviousMessage
+                      ? Colors.white
+                      : Colors.white30,
+              size: 20,
             ),
+            onPressed:
+                controller.canGoToPreviousMessage
+                    ? controller.goToPreviousMessage
+                    : null,
+            tooltip: '이전 대화',
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.arrow_forward_ios,
+              color:
+                  controller.canSendMessage
+                      ? Colors.white30
+                      : controller.isInHistoryView
+                      ? Colors.white
+                      : Colors.white30,
+              size: 20,
+            ),
+            onPressed:
+                controller.canSendMessage
+                    ? null
+                    : controller.isInHistoryView
+                    ? controller.goToNextMessage
+                    : controller.skipOrNext,
+            tooltip: '다음 대화',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildThreeDotsAnimation() {
+    return Flexible(
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DotPulse(delay: const Duration(milliseconds: 0)),
+            const SizedBox(width: 8),
+            DotPulse(delay: const Duration(milliseconds: 300)),
+            const SizedBox(width: 8),
+            DotPulse(delay: const Duration(milliseconds: 600)),
+          ],
+        ),
       ),
     );
   }

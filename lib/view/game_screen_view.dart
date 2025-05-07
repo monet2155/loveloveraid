@@ -41,8 +41,27 @@ class GameScreenView extends StatelessWidget {
               _buildBackground(),
               _buildCharacterImages(),
               _buildDialogAndInput(),
+              if (controller.isInHistoryView) _buildHistoryIndicator(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryIndicator() {
+    return Positioned(
+      top: 20,
+      right: 20,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text(
+          '히스토리 모드',
+          style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -161,28 +180,75 @@ class GameScreenView extends StatelessWidget {
         color: Colors.black.withOpacity(0.7),
         borderRadius: const BorderRadius.all(Radius.circular(16)),
       ),
-      child: SizedBox(
-        height: 120,
-        width: double.infinity,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              controller.currentCharacter,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+      child: Stack(
+        children: [
+          SizedBox(
+            height: 120,
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  controller.currentCharacter,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  controller.visibleText,
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              controller.visibleText,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios,
+                    color:
+                        controller.canGoToPreviousMessage
+                            ? Colors.white
+                            : Colors.white30,
+                    size: 20,
+                  ),
+                  onPressed:
+                      controller.canGoToPreviousMessage
+                          ? controller.goToPreviousMessage
+                          : null,
+                  tooltip: '이전 대화',
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.arrow_forward_ios,
+                    color:
+                        controller.canSendMessage
+                            ? Colors.white30
+                            : controller.isInHistoryView
+                            ? Colors.white
+                            : Colors.white30,
+                    size: 20,
+                  ),
+                  onPressed:
+                      controller.canSendMessage
+                          ? null
+                          : controller.isInHistoryView
+                          ? controller.goToNextMessage
+                          : controller.skipOrNext,
+                  tooltip: '다음 대화',
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

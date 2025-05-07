@@ -23,6 +23,9 @@ class GameScreenController {
   Timer? _textTimer;
   DialogueLine? _currentLine;
 
+  // 로딩 상태 변수 추가
+  bool _isLoading = false;
+
   static const Duration textSpeed = Duration(milliseconds: 40);
 
   String get currentCharacter => _currentLine?.character ?? '';
@@ -31,7 +34,11 @@ class GameScreenController {
       !_isDialoguePlaying &&
       _dialogueQueue.isEmpty &&
       !_isWaitingForTap &&
-      !_isInHistoryView;
+      !_isInHistoryView &&
+      !_isLoading; // 로딩 중에는 메시지를 보낼 수 없도록 수정
+
+  // 로딩 상태 getter 추가
+  bool get isLoading => _isLoading;
 
   String? _sessionId;
 
@@ -71,14 +78,19 @@ class GameScreenController {
   });
 
   Future<void> init() async {
+    _isLoading = true; // 초기화 시작 시 로딩 상태 활성화
+    onUpdate();
     await initSession();
     _appearedCharacters.clear();
+    _isLoading = false; // 초기화 완료 시 로딩 상태 비활성화
+    onUpdate();
   }
 
   Future<void> sendPlayerMessage(String message) async {
     if (!canSendMessage || _sessionId == null) return;
 
     _isDialoguePlaying = true;
+    _isLoading = true; // 메시지 전송 시작 시 로딩 상태 활성화
     onUpdate();
 
     final apiUrl = dotenv.env['API_URL'];
@@ -133,6 +145,9 @@ class GameScreenController {
     } catch (e) {
       print('서버와의 통신 중 오류 발생: $e');
       addErrorDialogueLine('서버와의 통신 중 오류가 발생했습니다.');
+    } finally {
+      _isLoading = false; // 메시지 전송 완료 시 로딩 상태 비활성화
+      onUpdate();
     }
 
     _playNextLine();
@@ -283,24 +298,35 @@ class GameScreenController {
     final playerId =
         '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1'; // 이후 실제 사용자 ID 연동 가능
 
-    final res = await http.post(
-      Uri.parse('$apiUrl/npc/$universeId/start-session'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'player_id': playerId,
-        'event_id': eventId,
-        "npcs": npcs.map((npc) => npc.id).toList(),
-      }),
-    );
+    try {
+      _isLoading = true; // 세션 초기화 시작 시 로딩 상태 활성화
+      onUpdate();
 
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      _sessionId = data['session_id'];
-      getInitialEvent(eventId);
-    } else {
-      print('세션 시작 실패: ${res.statusCode}');
-      print('응답 본문: ${utf8.decode(res.bodyBytes)}');
-      addErrorDialogueLine('세션 시작에 실패했습니다.');
+      final res = await http.post(
+        Uri.parse('$apiUrl/npc/$universeId/start-session'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'player_id': playerId,
+          'event_id': eventId,
+          "npcs": npcs.map((npc) => npc.id).toList(),
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        _sessionId = data['session_id'];
+        await getInitialEvent(eventId);
+      } else {
+        print('세션 시작 실패: ${res.statusCode}');
+        print('응답 본문: ${utf8.decode(res.bodyBytes)}');
+        addErrorDialogueLine('세션 시작에 실패했습니다.');
+      }
+    } catch (e) {
+      print('세션 초기화 오류: $e');
+      addErrorDialogueLine('세션 초기화 중 오류가 발생했습니다.');
+    } finally {
+      _isLoading = false; // 세션 초기화 완료 시 로딩 상태 비활성화
+      onUpdate();
     }
 
     _playNextLine();
@@ -308,36 +334,47 @@ class GameScreenController {
 
   Future<void> getInitialEvent(String eventId) async {
     final apiUrl = dotenv.env['API_URL'];
-    final res = await http.get(
-      Uri.parse('$apiUrl/event/$eventId'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      _isLoading = true; // 이벤트 로딩 시작 시 로딩 상태 활성화
+      onUpdate();
 
-    if (res.statusCode == 200) {
-      final decodedBody = json.decode(utf8.decode(res.bodyBytes));
-      final Map<String, dynamic> data = decodedBody;
-      List steps = data["steps"];
+      final res = await http.get(
+        Uri.parse('$apiUrl/event/$eventId'),
+        headers: {'Content-Type': 'application/json'},
+      );
 
-      for (var step in steps) {
-        Step stepData = Step.fromJson(step);
-        String text = stepData.message;
-        String speakerType = stepData.speakerType;
-        String character = "";
+      if (res.statusCode == 200) {
+        final decodedBody = json.decode(utf8.decode(res.bodyBytes));
+        final Map<String, dynamic> data = decodedBody;
+        List steps = data["steps"];
 
-        if (speakerType == 'PLAYER') {
-          character = '플레이어';
-        } else if (speakerType == 'NPC') {
-          character = npcs.firstWhere((c) => c.id == stepData.speakerId).name;
-        } else if (speakerType == 'SYSTEM') {
-          character = '시스템';
+        for (var step in steps) {
+          Step stepData = Step.fromJson(step);
+          String text = stepData.message;
+          String speakerType = stepData.speakerType;
+          String character = "";
+
+          if (speakerType == 'PLAYER') {
+            character = '플레이어';
+          } else if (speakerType == 'NPC') {
+            character = npcs.firstWhere((c) => c.id == stepData.speakerId).name;
+          } else if (speakerType == 'SYSTEM') {
+            character = '시스템';
+          }
+
+          addDialogueQueue(character, text);
         }
-
-        addDialogueQueue(character, text);
+      } else {
+        print('세션 시작 실패: ${res.statusCode}');
+        print('응답 본문: ${res.body}');
+        addErrorDialogueLine('세션 시작에 실패했습니다.');
       }
-    } else {
-      print('세션 시작 실패: ${res.statusCode}');
-      print('응답 본문: ${res.body}');
-      addErrorDialogueLine('세션 시작에 실패했습니다.');
+    } catch (e) {
+      print('초기 이벤트 로딩 오류: $e');
+      addErrorDialogueLine('초기 이벤트 로딩 중 오류가 발생했습니다.');
+    } finally {
+      _isLoading = false; // 이벤트 로딩 완료 시 로딩 상태 비활성화
+      onUpdate();
     }
     _playNextLine();
   }

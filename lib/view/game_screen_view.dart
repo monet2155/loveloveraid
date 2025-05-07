@@ -210,7 +210,10 @@ class GameScreenView extends StatelessWidget {
               ],
             ),
           ),
-          controller.isLoading ? Container() : _buildHistoryButtonMenu(),
+          (controller.isLoading ||
+                  (!controller.canSendMessage && !controller.isInHistoryView))
+              ? Container()
+              : _buildHistoryButtonMenu(),
         ],
       ),
     );

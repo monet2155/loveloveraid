@@ -28,7 +28,10 @@ class GameScreenController {
   String get currentCharacter => _currentLine?.character ?? '';
   String get visibleText => _visibleText;
   bool get canSendMessage =>
-      !_isDialoguePlaying && _dialogueQueue.isEmpty && !_isWaitingForTap;
+      !_isDialoguePlaying &&
+      _dialogueQueue.isEmpty &&
+      !_isWaitingForTap &&
+      !_isInHistoryView;
 
   String? _sessionId;
 
@@ -46,6 +49,19 @@ class GameScreenController {
   void markCharacterAsAnimated(String character) {
     _animatedCharacters.add(character);
   }
+
+  // 대화 히스토리 관련 변수 추가
+  final List<DialogueLine> _dialogueHistory = [];
+  int _currentHistoryIndex = -1;
+
+  bool _isInHistoryView = false;
+
+  // 히스토리 관련 getter 추가
+  bool get canGoToPreviousMessage => _currentHistoryIndex > 0;
+  bool get canGoToNextMessage =>
+      (_isInHistoryView &&
+          (_currentHistoryIndex < _dialogueHistory.length - 1));
+  bool get isInHistoryView => _isInHistoryView;
 
   GameScreenController({
     required this.playerName,
@@ -84,6 +100,12 @@ class GameScreenController {
           addErrorDialogueLine('서버에서 대화 내용을 가져오지 못했습니다.');
           return;
         }
+
+        // 대화 히스토리에 플레이어 메시지 추가
+        _dialogueHistory.add(
+          DialogueLine(character: playerName, text: message),
+        );
+        _currentHistoryIndex = _dialogueHistory.length - 1;
 
         List<String> dialogueList = data['dialogue'].split("\n\n");
         for (var text in dialogueList) {
@@ -133,6 +155,10 @@ class GameScreenController {
     }
     int charIndex = 0;
 
+    // 대화 히스토리에 현재 라인 추가
+    _dialogueHistory.add(_currentLine!);
+    _currentHistoryIndex = _dialogueHistory.length - 1;
+
     if (currentCharacter != '시스템') {
       _appearedCharacters.add(currentCharacter); // 등장 캐릭터 추적
       if (kDebugMode && USING_TTS) {
@@ -165,7 +191,52 @@ class GameScreenController {
     });
   }
 
+  // 대화 히스토리 관련 메서드 추가
+  void goToPreviousMessage() {
+    if (!canGoToPreviousMessage) return;
+
+    _isInHistoryView = true;
+    _currentHistoryIndex--;
+    _showHistoryMessage();
+  }
+
+  void goToNextMessage() {
+    if (canGoToNextMessage) {
+      _currentHistoryIndex++;
+      _showHistoryMessage();
+
+      if (_currentHistoryIndex >= _dialogueHistory.length - 1) {
+        // 히스토리의 끝에 도달하면 다음 대화로 이동
+        _isInHistoryView = false;
+        skipOrNext();
+      }
+    } else if (_isInHistoryView) {
+      _isInHistoryView = false;
+      skipOrNext();
+    }
+  }
+
+  void _showHistoryMessage() {
+    if (_currentHistoryIndex < 0 ||
+        _currentHistoryIndex >= _dialogueHistory.length) {
+      return;
+    }
+
+    _textTimer?.cancel();
+    _currentLine = _dialogueHistory[_currentHistoryIndex];
+    _visibleText = _currentLine!.text;
+    _isWaitingForTap = false;
+    _isDialoguePlaying = false;
+    onUpdate();
+  }
+
   void skipOrNext() {
+    if (_isInHistoryView) {
+      // 히스토리 모드일 때는 다음 히스토리로 이동
+      goToNextMessage();
+      return;
+    }
+
     if (_textTimer?.isActive ?? false) {
       _textTimer?.cancel();
       _visibleText = _currentLine?.text ?? '';
@@ -189,6 +260,10 @@ class GameScreenController {
       }
     } else if (event.logicalKey == LogicalKeyboardKey.space) {
       skipOrNext();
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      goToPreviousMessage();
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      goToNextMessage();
     }
   }
 

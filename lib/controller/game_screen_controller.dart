@@ -39,6 +39,138 @@ class TTSException extends GameException {
     : super(message, details: details, originalError: originalError);
 }
 
+// API 서비스 클래스
+class GameApiService {
+  final String baseUrl;
+  final String? provider;
+
+  GameApiService()
+    : baseUrl = dotenv.env['API_URL'] ?? '',
+      provider = dotenv.env['LLM_PROVIDER'];
+
+  Future<String> startSession(
+    String universeId,
+    String playerId,
+    String eventId,
+    List<String> npcIds,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/npc/$universeId/start-session'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'player_id': playerId,
+        'event_id': eventId,
+        "npcs": npcIds,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['session_id'];
+    } else {
+      throw SessionException(
+        '세션 시작에 실패했습니다.',
+        details: 'Status code: ${response.statusCode}',
+        originalError: utf8.decode(response.bodyBytes),
+      );
+    }
+  }
+
+  Future<List<Step>> getInitialEvent(String eventId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/event/$eventId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> data = decodedBody;
+      List steps = data["steps"];
+      return steps.map((step) => Step.fromJson(step)).toList();
+    } else {
+      throw NetworkException(
+        '초기 이벤트 로딩에 실패했습니다.',
+        details: 'Status code: ${response.statusCode}',
+        originalError: response.body,
+      );
+    }
+  }
+
+  Future<List<String>> sendDialogue(String sessionId, String message) async {
+    final response = await http.post(
+      Uri.parse(
+        '$baseUrl/npc/$sessionId/dialogue${provider != null ? "?provider=$provider" : ""}',
+      ),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'player_input': message}),
+    );
+
+    if (response.statusCode == 200) {
+      final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+      final Map<String, dynamic> data = decodedBody;
+      if (data['dialogue'] == null) {
+        throw NetworkException('서버에서 대화 내용을 가져오지 못했습니다.');
+      }
+
+      return data['dialogue'].split("\n\n");
+    } else {
+      throw NetworkException(
+        '서버와의 통신 중 오류가 발생했습니다.',
+        details: 'Status code: ${response.statusCode}',
+        originalError: utf8.decode(response.bodyBytes),
+      );
+    }
+  }
+}
+
+// TTS 서비스 클래스
+class TTSService {
+  final String baseUrl;
+  final String apiKey;
+
+  TTSService()
+    : baseUrl = dotenv.env['SUPERTONE_API_URL'] ?? '',
+      apiKey = dotenv.env['SUPERTONE_API_KEY'] ?? '';
+
+  static const List<Map<String, String>> voiceIds = [
+    {"name": "이서아", "id": "hkzbhWknLqbwz8Jw8RYVyV"},
+    {"name": "강지연", "id": "c1fEJ6TaHYha7ACMr7Cj3r"},
+    {"name": "윤하린", "id": "gdvdX3oHN69chfYqyro9UE"},
+  ];
+
+  Future<List<int>> generateSpeech(String character, String text) async {
+    if (baseUrl.isEmpty || apiKey.isEmpty) {
+      throw TTSException('TTS API 설정이 누락되었습니다.');
+    }
+
+    final voice = voiceIds.firstWhere(
+      (v) => v['name'] == character,
+      orElse: () => throw TTSException('해당 캐릭터의 음성을 찾을 수 없습니다: $character'),
+    );
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/text-to-speech/${voice['id']}"),
+      headers: {'x-sup-api-key': apiKey, 'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "language": "ko",
+        "text": text,
+        "model": "turbo",
+        "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 1},
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw TTSException(
+        'TTS 요청에 실패했습니다.',
+        details: 'Status code: ${response.statusCode}',
+        originalError: response.body,
+      );
+    }
+  }
+}
+
 class GameScreenState {
   final List<DialogueLine> dialogueQueue;
   final bool isDialoguePlaying;
@@ -104,6 +236,8 @@ class GameScreenController {
   final Function onUpdate;
   final Function onEndChapter;
   final List<Npc> npcs;
+  final GameApiService _apiService;
+  final TTSService _ttsService;
 
   GameScreenState _state = GameScreenState();
   Timer? _textTimer;
@@ -135,7 +269,8 @@ class GameScreenController {
     required this.onUpdate,
     required this.onEndChapter,
     required this.npcs,
-  });
+  }) : _apiService = GameApiService(),
+       _ttsService = TTSService();
 
   void _updateState(GameScreenState newState) {
     _state = newState;
@@ -161,62 +296,41 @@ class GameScreenController {
 
     _updateState(_state.copyWith(isDialoguePlaying: true, isLoading: true));
 
-    final apiUrl = dotenv.env['API_URL'];
-    final provider = dotenv.env['LLM_PROVIDER'];
-
     try {
-      final response = await http.post(
-        Uri.parse(
-          '$apiUrl/npc/${_state.sessionId}/dialogue${provider != null ? "?provider=$provider" : ""}',
-        ),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'player_input': message}),
+      final dialogueList = await _apiService.sendDialogue(
+        _state.sessionId!,
+        message,
       );
 
-      if (response.statusCode == 200) {
-        final decodedBody = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> data = decodedBody;
-        if (data['dialogue'] == null) {
-          throw NetworkException('서버에서 대화 내용을 가져오지 못했습니다.');
+      // 대화 히스토리에 플레이어 메시지 추가
+      final newHistory = [
+        ..._state.dialogueHistory,
+        DialogueLine(character: playerName, text: message),
+      ];
+      _updateState(
+        _state.copyWith(
+          dialogueHistory: newHistory,
+          currentHistoryIndex: newHistory.length - 1,
+        ),
+      );
+
+      for (var text in dialogueList) {
+        if (text == "**!!END!!**") {
+          addDialogueQueue('시스템', '대화가 종료되었습니다.');
+          break;
         }
 
-        // 대화 히스토리에 플레이어 메시지 추가
-        final newHistory = [
-          ..._state.dialogueHistory,
-          DialogueLine(character: playerName, text: message),
-        ];
-        _updateState(
-          _state.copyWith(
-            dialogueHistory: newHistory,
-            currentHistoryIndex: newHistory.length - 1,
-          ),
-        );
+        String character = text.split(':')[0];
+        String message = text.split(':')[1].trim();
 
-        List<String> dialogueList = data['dialogue'].split("\n\n");
-        for (var text in dialogueList) {
-          if (text == "**!!END!!**") {
-            addDialogueQueue('시스템', '대화가 종료되었습니다.');
-            break;
+        if (message.contains('\n')) {
+          List<String> splitMessage = message.split('\n');
+          for (var i = 0; i < splitMessage.length; i++) {
+            addDialogueQueue(character, splitMessage[i]);
           }
-
-          String character = text.split(':')[0];
-          String message = text.split(':')[1].trim();
-
-          if (message.contains('\n')) {
-            List<String> splitMessage = message.split('\n');
-            for (var i = 0; i < splitMessage.length; i++) {
-              addDialogueQueue(character, splitMessage[i]);
-            }
-          } else {
-            addDialogueQueue(character, message);
-          }
+        } else {
+          addDialogueQueue(character, message);
         }
-      } else {
-        throw NetworkException(
-          '서버와의 통신 중 오류가 발생했습니다.',
-          details: 'Status code: ${response.statusCode}',
-          originalError: utf8.decode(response.bodyBytes),
-        );
       }
     } on NetworkException catch (e) {
       _handleError(e);
@@ -385,37 +499,23 @@ class GameScreenController {
 
   Future<void> initSession() async {
     final universeId = dotenv.env['UNIVERSE_ID'];
-    final apiUrl = dotenv.env['API_URL'];
     final eventId = dotenv.env['EVENT_ID'];
 
-    if (universeId == null || apiUrl == null || eventId == null) {
+    if (universeId == null || eventId == null) {
       throw SessionException('환경변수가 누락되었습니다.');
     }
 
     final playerId = '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1';
 
     try {
-      final res = await http.post(
-        Uri.parse('$apiUrl/npc/$universeId/start-session'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'player_id': playerId,
-          'event_id': eventId,
-          "npcs": npcs.map((npc) => npc.id).toList(),
-        }),
+      final sessionId = await _apiService.startSession(
+        universeId,
+        playerId,
+        eventId,
+        npcs.map((npc) => npc.id).toList(),
       );
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        _updateState(_state.copyWith(sessionId: data['session_id']));
-        await getInitialEvent(eventId);
-      } else {
-        throw SessionException(
-          '세션 시작에 실패했습니다.',
-          details: 'Status code: ${res.statusCode}',
-          originalError: utf8.decode(res.bodyBytes),
-        );
-      }
+      _updateState(_state.copyWith(sessionId: sessionId));
+      await getInitialEvent(eventId);
     } on SessionException catch (e) {
       _handleError(e);
     } catch (e) {
@@ -424,42 +524,25 @@ class GameScreenController {
   }
 
   Future<void> getInitialEvent(String eventId) async {
-    final apiUrl = dotenv.env['API_URL'];
     try {
-      final res = await http.get(
-        Uri.parse('$apiUrl/event/$eventId'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final steps = await _apiService.getInitialEvent(eventId);
 
-      if (res.statusCode == 200) {
-        final decodedBody = json.decode(utf8.decode(res.bodyBytes));
-        final Map<String, dynamic> data = decodedBody;
-        List steps = data["steps"];
+      for (var stepData in steps) {
+        String text = stepData.message;
+        String speakerType = stepData.speakerType;
+        String character = "";
 
-        for (var step in steps) {
-          Step stepData = Step.fromJson(step);
-          String text = stepData.message;
-          String speakerType = stepData.speakerType;
-          String character = "";
-
-          if (speakerType == 'PLAYER') {
-            character = '플레이어';
-          } else if (speakerType == 'NPC') {
-            character = npcs.firstWhere((c) => c.id == stepData.speakerId).name;
-          } else if (speakerType == 'SYSTEM') {
-            character = '시스템';
-          }
-
-          addDialogueQueue(character, text);
+        if (speakerType == 'PLAYER') {
+          character = '플레이어';
+        } else if (speakerType == 'NPC') {
+          character = npcs.firstWhere((c) => c.id == stepData.speakerId).name;
+        } else if (speakerType == 'SYSTEM') {
+          character = '시스템';
         }
-        _playNextLine();
-      } else {
-        throw NetworkException(
-          '초기 이벤트 로딩에 실패했습니다.',
-          details: 'Status code: ${res.statusCode}',
-          originalError: res.body,
-        );
+
+        addDialogueQueue(character, text);
       }
+      _playNextLine();
     } on NetworkException catch (e) {
       _handleError(e);
     } catch (e) {
@@ -484,50 +567,9 @@ class GameScreenController {
 
   Future<void> playTTS(String character, String text) async {
     try {
-      List<Map> voiceId = [
-        {"name": "이서아", "id": "hkzbhWknLqbwz8Jw8RYVyV"},
-        {"name": "강지연", "id": "c1fEJ6TaHYha7ACMr7Cj3r"},
-        {"name": "윤하린", "id": "gdvdX3oHN69chfYqyro9UE"},
-      ];
-
-      final apiUrl = dotenv.env['SUPERTONE_API_URL'];
-      final apiKey = dotenv.env['SUPERTONE_API_KEY'];
-
-      if (apiUrl == null || apiKey == null) {
-        throw TTSException('TTS API 설정이 누락되었습니다.');
-      }
-
-      final voice = voiceId.firstWhere(
-        (v) => v['name'] == character,
-        orElse: () => throw TTSException('해당 캐릭터의 음성을 찾을 수 없습니다: $character'),
-      );
-
-      final res = await http.post(
-        Uri.parse("$apiUrl/text-to-speech/${voice['id']}"),
-        headers: {'x-sup-api-key': apiKey, 'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "language": "ko",
-          "text": text,
-          "model": "turbo",
-          "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 1},
-        }),
-      );
-
-      if (res.statusCode == 200) {
-        try {
-          final bytes = res.bodyBytes;
-          await player.setAudioSource(MyCustomSource(bytes));
-          await player.play();
-        } catch (e) {
-          throw TTSException('오디오 재생에 실패했습니다.', originalError: e);
-        }
-      } else {
-        throw TTSException(
-          'TTS 요청에 실패했습니다.',
-          details: 'Status code: ${res.statusCode}',
-          originalError: res.body,
-        );
-      }
+      final bytes = await _ttsService.generateSpeech(character, text);
+      await player.setAudioSource(MyCustomSource(bytes));
+      await player.play();
     } on TTSException catch (e) {
       _handleError(e);
     } catch (e) {

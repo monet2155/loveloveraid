@@ -51,10 +51,13 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _handleKeyEvent(KeyEvent event) {
-    if (_textFieldFocusNode.hasFocus) return;
-
     if (event is KeyDownEvent) {
-      _controller.handleKeyEvent(event);
+      if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+          event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        _controller.handleKeyEvent(event);
+      } else if (!_textFieldFocusNode.hasFocus) {
+        _controller.handleKeyEvent(event);
+      }
     }
     _textFieldFocusNode.requestFocus();
   }

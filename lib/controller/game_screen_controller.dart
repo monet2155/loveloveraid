@@ -11,64 +11,96 @@ import 'package:just_audio/just_audio.dart';
 
 const USING_TTS = false;
 
+class GameScreenState {
+  final List<DialogueLine> dialogueQueue;
+  final bool isDialoguePlaying;
+  final bool isWaitingForTap;
+  final String visibleText;
+  final DialogueLine? currentLine;
+  final bool isLoading;
+  final String? sessionId;
+  final Set<String> appearedCharacters;
+  final Set<String> animatedCharacters;
+  final List<DialogueLine> dialogueHistory;
+  final int currentHistoryIndex;
+  final bool isInHistoryView;
+
+  GameScreenState({
+    this.dialogueQueue = const [],
+    this.isDialoguePlaying = false,
+    this.isWaitingForTap = false,
+    this.visibleText = '',
+    this.currentLine,
+    this.isLoading = false,
+    this.sessionId,
+    this.appearedCharacters = const {},
+    this.animatedCharacters = const {},
+    this.dialogueHistory = const [],
+    this.currentHistoryIndex = -1,
+    this.isInHistoryView = false,
+  });
+
+  GameScreenState copyWith({
+    List<DialogueLine>? dialogueQueue,
+    bool? isDialoguePlaying,
+    bool? isWaitingForTap,
+    String? visibleText,
+    DialogueLine? currentLine,
+    bool? isLoading,
+    String? sessionId,
+    Set<String>? appearedCharacters,
+    Set<String>? animatedCharacters,
+    List<DialogueLine>? dialogueHistory,
+    int? currentHistoryIndex,
+    bool? isInHistoryView,
+  }) {
+    return GameScreenState(
+      dialogueQueue: dialogueQueue ?? this.dialogueQueue,
+      isDialoguePlaying: isDialoguePlaying ?? this.isDialoguePlaying,
+      isWaitingForTap: isWaitingForTap ?? this.isWaitingForTap,
+      visibleText: visibleText ?? this.visibleText,
+      currentLine: currentLine ?? this.currentLine,
+      isLoading: isLoading ?? this.isLoading,
+      sessionId: sessionId ?? this.sessionId,
+      appearedCharacters: appearedCharacters ?? this.appearedCharacters,
+      animatedCharacters: animatedCharacters ?? this.animatedCharacters,
+      dialogueHistory: dialogueHistory ?? this.dialogueHistory,
+      currentHistoryIndex: currentHistoryIndex ?? this.currentHistoryIndex,
+      isInHistoryView: isInHistoryView ?? this.isInHistoryView,
+    );
+  }
+}
+
 class GameScreenController {
   final String playerName;
   final Function onUpdate;
   final Function onEndChapter;
+  final List<Npc> npcs;
 
-  final List<DialogueLine> _dialogueQueue = [];
-  bool _isDialoguePlaying = false;
-  bool _isWaitingForTap = false;
-  String _visibleText = '';
+  GameScreenState _state = GameScreenState();
   Timer? _textTimer;
-  DialogueLine? _currentLine;
-
-  // 로딩 상태 변수 추가
-  bool _isLoading = false;
+  final player = AudioPlayer();
 
   static const Duration textSpeed = Duration(milliseconds: 40);
 
-  String get currentCharacter => _currentLine?.character ?? '';
-  String get visibleText => _visibleText;
+  String get currentCharacter => _state.currentLine?.character ?? '';
+  String get visibleText => _state.visibleText;
   bool get canSendMessage =>
-      !_isDialoguePlaying &&
-      _dialogueQueue.isEmpty &&
-      !_isWaitingForTap &&
-      !_isInHistoryView &&
-      !_isLoading; // 로딩 중에는 메시지를 보낼 수 없도록 수정
+      !_state.isDialoguePlaying &&
+      _state.dialogueQueue.isEmpty &&
+      !_state.isWaitingForTap &&
+      !_state.isInHistoryView &&
+      !_state.isLoading;
 
-  // 로딩 상태 getter 추가
-  bool get isLoading => _isLoading;
-
-  String? _sessionId;
-
-  final List<Npc> npcs;
-
-  final Set<String> _appearedCharacters = {}; // 대화에 등장한 캐릭터 추적
-  final Set<String> _animatedCharacters = {};
-
-  Set<String> get appearedCharacters => _appearedCharacters;
-
+  bool get isLoading => _state.isLoading;
+  Set<String> get appearedCharacters => _state.appearedCharacters;
   Set<String> get newlyAppearedCharacters =>
-      _appearedCharacters.difference(_animatedCharacters);
-  final player = AudioPlayer();
-
-  void markCharacterAsAnimated(String character) {
-    _animatedCharacters.add(character);
-  }
-
-  // 대화 히스토리 관련 변수 추가
-  final List<DialogueLine> _dialogueHistory = [];
-  int _currentHistoryIndex = -1;
-
-  bool _isInHistoryView = false;
-
-  // 히스토리 관련 getter 추가
-  bool get canGoToPreviousMessage => _currentHistoryIndex > 0;
+      _state.appearedCharacters.difference(_state.animatedCharacters);
+  bool get canGoToPreviousMessage => _state.currentHistoryIndex > 0;
   bool get canGoToNextMessage =>
-      (_isInHistoryView &&
-          (_currentHistoryIndex < _dialogueHistory.length - 1));
-  bool get isInHistoryView => _isInHistoryView;
+      (_state.isInHistoryView &&
+          (_state.currentHistoryIndex < _state.dialogueHistory.length - 1));
+  bool get isInHistoryView => _state.isInHistoryView;
 
   GameScreenController({
     required this.playerName,
@@ -77,21 +109,29 @@ class GameScreenController {
     required this.npcs,
   });
 
-  Future<void> init() async {
-    _isLoading = true;
-    onUpdate();
-    await initSession();
-    _appearedCharacters.clear();
-    _isLoading = false;
+  void _updateState(GameScreenState newState) {
+    _state = newState;
     onUpdate();
   }
 
-  Future<void> sendPlayerMessage(String message) async {
-    if (!canSendMessage || _sessionId == null) return;
+  void markCharacterAsAnimated(String character) {
+    _updateState(
+      _state.copyWith(
+        animatedCharacters: {..._state.animatedCharacters, character},
+      ),
+    );
+  }
 
-    _isDialoguePlaying = true;
-    _isLoading = true; // 메시지 전송 시작 시 로딩 상태 활성화
-    onUpdate();
+  Future<void> init() async {
+    _updateState(_state.copyWith(isLoading: true));
+    await initSession();
+    _updateState(_state.copyWith(appearedCharacters: {}, isLoading: false));
+  }
+
+  Future<void> sendPlayerMessage(String message) async {
+    if (!canSendMessage || _state.sessionId == null) return;
+
+    _updateState(_state.copyWith(isDialoguePlaying: true, isLoading: true));
 
     final apiUrl = dotenv.env['API_URL'];
     final provider = dotenv.env['LLM_PROVIDER'];
@@ -99,7 +139,7 @@ class GameScreenController {
     try {
       final response = await http.post(
         Uri.parse(
-          '$apiUrl/npc/$_sessionId/dialogue${provider != null ? "?provider=$provider" : ""}',
+          '$apiUrl/npc/${_state.sessionId}/dialogue${provider != null ? "?provider=$provider" : ""}',
         ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'player_input': message}),
@@ -114,10 +154,16 @@ class GameScreenController {
         }
 
         // 대화 히스토리에 플레이어 메시지 추가
-        _dialogueHistory.add(
+        final newHistory = [
+          ..._state.dialogueHistory,
           DialogueLine(character: playerName, text: message),
+        ];
+        _updateState(
+          _state.copyWith(
+            dialogueHistory: newHistory,
+            currentHistoryIndex: newHistory.length - 1,
+          ),
         );
-        _currentHistoryIndex = _dialogueHistory.length - 1;
 
         List<String> dialogueList = data['dialogue'].split("\n\n");
         for (var text in dialogueList) {
@@ -146,8 +192,7 @@ class GameScreenController {
       print('서버와의 통신 중 오류 발생: $e');
       addErrorDialogueLine('서버와의 통신 중 오류가 발생했습니다.');
     } finally {
-      _isLoading = false; // 메시지 전송 완료 시 로딩 상태 비활성화
-      onUpdate();
+      _updateState(_state.copyWith(isLoading: false));
     }
 
     _playNextLine();
@@ -155,28 +200,40 @@ class GameScreenController {
 
   void _playNextLine() {
     print("play next");
-    if (_dialogueQueue.isEmpty) {
-      _isDialoguePlaying = false;
-      _isWaitingForTap = false;
-      onUpdate();
+    if (_state.dialogueQueue.isEmpty) {
+      _updateState(
+        _state.copyWith(isDialoguePlaying: false, isWaitingForTap: false),
+      );
       return;
     }
 
-    _currentLine = _dialogueQueue.removeAt(0);
-    _visibleText = '';
-    final fullText = _currentLine!.text;
+    final currentLine = _state.dialogueQueue.first;
+    final newQueue = List<DialogueLine>.from(_state.dialogueQueue)..removeAt(0);
+    final fullText = currentLine.text;
+
     if (fullText == "대화가 종료되었습니다.") {
       onEndChapter();
       return;
     }
-    int charIndex = 0;
 
     // 대화 히스토리에 현재 라인 추가
-    _dialogueHistory.add(_currentLine!);
-    _currentHistoryIndex = _dialogueHistory.length - 1;
+    final newHistory = [..._state.dialogueHistory, currentLine];
+    _updateState(
+      _state.copyWith(
+        dialogueQueue: newQueue,
+        currentLine: currentLine,
+        visibleText: '',
+        dialogueHistory: newHistory,
+        currentHistoryIndex: newHistory.length - 1,
+      ),
+    );
 
     if (currentCharacter != '시스템') {
-      _appearedCharacters.add(currentCharacter); // 등장 캐릭터 추적
+      _updateState(
+        _state.copyWith(
+          appearedCharacters: {..._state.appearedCharacters, currentCharacter},
+        ),
+      );
       if (kDebugMode && USING_TTS) {
         if (player.playing) {
           player.stop();
@@ -185,20 +242,22 @@ class GameScreenController {
       }
     }
 
+    int charIndex = 0;
     _textTimer?.cancel();
     _textTimer = Timer.periodic(textSpeed, (timer) {
-      _visibleText += fullText[charIndex];
-      onUpdate();
+      _updateState(
+        _state.copyWith(visibleText: _state.visibleText + fullText[charIndex]),
+      );
       charIndex++;
       if (charIndex >= fullText.length) {
         timer.cancel();
-        _isWaitingForTap = true;
-        _isDialoguePlaying = false;
-        onUpdate();
+        _updateState(
+          _state.copyWith(isWaitingForTap: true, isDialoguePlaying: false),
+        );
 
-        if (_dialogueQueue.isEmpty) {
+        if (_state.dialogueQueue.isEmpty) {
           Future.delayed(const Duration(milliseconds: 300), () {
-            if (_isWaitingForTap) {
+            if (_state.isWaitingForTap) {
               skipOrNext();
             }
           });
@@ -207,62 +266,72 @@ class GameScreenController {
     });
   }
 
-  // 대화 히스토리 관련 메서드 추가
   void goToPreviousMessage() {
     if (!canGoToPreviousMessage) return;
 
-    _isInHistoryView = true;
-    _currentHistoryIndex--;
+    _updateState(
+      _state.copyWith(
+        isInHistoryView: true,
+        currentHistoryIndex: _state.currentHistoryIndex - 1,
+      ),
+    );
     _showHistoryMessage();
   }
 
   void goToNextMessage() {
     if (canGoToNextMessage) {
-      _currentHistoryIndex++;
+      _updateState(
+        _state.copyWith(currentHistoryIndex: _state.currentHistoryIndex + 1),
+      );
       _showHistoryMessage();
 
-      if (_currentHistoryIndex >= _dialogueHistory.length - 1) {
-        // 히스토리의 끝에 도달하면 다음 대화로 이동
-        _isInHistoryView = false;
+      if (_state.currentHistoryIndex >= _state.dialogueHistory.length - 1) {
+        _updateState(_state.copyWith(isInHistoryView: false));
         skipOrNext();
       }
-    } else if (_isInHistoryView) {
-      _isInHistoryView = false;
+    } else if (_state.isInHistoryView) {
+      _updateState(_state.copyWith(isInHistoryView: false));
       skipOrNext();
     }
   }
 
   void _showHistoryMessage() {
-    if (_currentHistoryIndex < 0 ||
-        _currentHistoryIndex >= _dialogueHistory.length) {
+    if (_state.currentHistoryIndex < 0 ||
+        _state.currentHistoryIndex >= _state.dialogueHistory.length) {
       return;
     }
 
     _textTimer?.cancel();
-    _currentLine = _dialogueHistory[_currentHistoryIndex];
-    _visibleText = _currentLine!.text;
-    _isWaitingForTap = false;
-    _isDialoguePlaying = false;
-    onUpdate();
+    final historyLine = _state.dialogueHistory[_state.currentHistoryIndex];
+    _updateState(
+      _state.copyWith(
+        currentLine: historyLine,
+        visibleText: historyLine.text,
+        isWaitingForTap: false,
+        isDialoguePlaying: false,
+      ),
+    );
   }
 
   void skipOrNext() {
-    if (_isInHistoryView) {
-      // 히스토리 모드일 때는 다음 히스토리로 이동
+    if (_state.isInHistoryView) {
       goToNextMessage();
       return;
     }
 
     if (_textTimer?.isActive ?? false) {
       _textTimer?.cancel();
-      _visibleText = _currentLine?.text ?? '';
-      onUpdate();
-      _isWaitingForTap = true;
-      _isDialoguePlaying = false;
-    } else if (_isWaitingForTap) {
-      _isWaitingForTap = false;
-      _isDialoguePlaying = true;
-      onUpdate();
+      _updateState(
+        _state.copyWith(
+          visibleText: _state.currentLine?.text ?? '',
+          isWaitingForTap: true,
+          isDialoguePlaying: false,
+        ),
+      );
+    } else if (_state.isWaitingForTap) {
+      _updateState(
+        _state.copyWith(isWaitingForTap: false, isDialoguePlaying: true),
+      );
       _playNextLine();
     }
   }
@@ -289,9 +358,7 @@ class GameScreenController {
     final eventId = dotenv.env['EVENT_ID'];
 
     if (universeId == null || apiUrl == null || eventId == null) {
-      _dialogueQueue.add(
-        DialogueLine(character: '시스템', text: '환경변수가 누락되었습니다.'),
-      );
+      addDialogueQueue('시스템', '환경변수가 누락되었습니다.');
       _playNextLine();
       return;
     }
@@ -312,7 +379,7 @@ class GameScreenController {
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        _sessionId = data['session_id'];
+        _updateState(_state.copyWith(sessionId: data['session_id']));
         await getInitialEvent(eventId);
       } else {
         print('세션 시작 실패: ${res.statusCode}');
@@ -372,14 +439,15 @@ class GameScreenController {
 
   void addDialogueQueue(String character, String text) {
     String currentMessage = text.replaceAll("player", playerName);
-
-    _dialogueQueue.add(
+    final newQueue = [
+      ..._state.dialogueQueue,
       DialogueLine(character: character, text: currentMessage),
-    );
+    ];
+    _updateState(_state.copyWith(dialogueQueue: newQueue));
   }
 
   void addErrorDialogueLine(String error) {
-    _dialogueQueue.add(DialogueLine(character: '시스템', text: '오류 발생: $error'));
+    addDialogueQueue('시스템', '오류 발생: $error');
   }
 
   void playTTS(String character, String text) async {

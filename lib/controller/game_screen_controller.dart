@@ -78,11 +78,11 @@ class GameScreenController {
   });
 
   Future<void> init() async {
-    _isLoading = true; // 초기화 시작 시 로딩 상태 활성화
+    _isLoading = true;
     onUpdate();
     await initSession();
     _appearedCharacters.clear();
-    _isLoading = false; // 초기화 완료 시 로딩 상태 비활성화
+    _isLoading = false;
     onUpdate();
   }
 
@@ -154,6 +154,7 @@ class GameScreenController {
   }
 
   void _playNextLine() {
+    print("play next");
     if (_dialogueQueue.isEmpty) {
       _isDialoguePlaying = false;
       _isWaitingForTap = false;
@@ -299,9 +300,6 @@ class GameScreenController {
         '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1'; // 이후 실제 사용자 ID 연동 가능
 
     try {
-      _isLoading = true; // 세션 초기화 시작 시 로딩 상태 활성화
-      onUpdate();
-
       final res = await http.post(
         Uri.parse('$apiUrl/npc/$universeId/start-session'),
         headers: {'Content-Type': 'application/json'},
@@ -320,24 +318,18 @@ class GameScreenController {
         print('세션 시작 실패: ${res.statusCode}');
         print('응답 본문: ${utf8.decode(res.bodyBytes)}');
         addErrorDialogueLine('세션 시작에 실패했습니다.');
+        _playNextLine();
       }
     } catch (e) {
       print('세션 초기화 오류: $e');
       addErrorDialogueLine('세션 초기화 중 오류가 발생했습니다.');
-    } finally {
-      _isLoading = false; // 세션 초기화 완료 시 로딩 상태 비활성화
-      onUpdate();
+      _playNextLine();
     }
-
-    _playNextLine();
   }
 
   Future<void> getInitialEvent(String eventId) async {
     final apiUrl = dotenv.env['API_URL'];
     try {
-      _isLoading = true; // 이벤트 로딩 시작 시 로딩 상태 활성화
-      onUpdate();
-
       final res = await http.get(
         Uri.parse('$apiUrl/event/$eventId'),
         headers: {'Content-Type': 'application/json'},
@@ -364,19 +356,18 @@ class GameScreenController {
 
           addDialogueQueue(character, text);
         }
+        _playNextLine(); // 모든 스텝을 큐에 추가한 후 한 번만 호출
       } else {
         print('세션 시작 실패: ${res.statusCode}');
         print('응답 본문: ${res.body}');
         addErrorDialogueLine('세션 시작에 실패했습니다.');
+        _playNextLine();
       }
     } catch (e) {
       print('초기 이벤트 로딩 오류: $e');
       addErrorDialogueLine('초기 이벤트 로딩 중 오류가 발생했습니다.');
-    } finally {
-      _isLoading = false; // 이벤트 로딩 완료 시 로딩 상태 비활성화
-      onUpdate();
+      _playNextLine();
     }
-    _playNextLine();
   }
 
   void addDialogueQueue(String character, String text) {

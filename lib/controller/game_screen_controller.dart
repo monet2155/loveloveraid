@@ -1,57 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:loveloveraid/model/dialogue_line.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/model/npc.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:loveloveraid/constants/game_constants.dart';
 import 'package:loveloveraid/exceptions/game_exception.dart';
 import 'package:loveloveraid/services/game_api_service.dart';
-
-// TTS 서비스 클래스
-class TTSService {
-  final String baseUrl;
-  final String apiKey;
-
-  TTSService()
-    : baseUrl = dotenv.env[GameConstants.SUPERTONE_API_URL] ?? '',
-      apiKey = dotenv.env[GameConstants.SUPERTONE_API_KEY] ?? '';
-
-  Future<List<int>> generateSpeech(String character, String text) async {
-    if (baseUrl.isEmpty || apiKey.isEmpty) {
-      throw TTSException('TTS API 설정이 누락되었습니다.');
-    }
-
-    final voice = GameConstants.TTS_VOICE_IDS.firstWhere(
-      (v) => v['name'] == character,
-      orElse: () => throw TTSException('해당 캐릭터의 음성을 찾을 수 없습니다: $character'),
-    );
-
-    final response = await http.post(
-      Uri.parse("$baseUrl/text-to-speech/${voice['id']}"),
-      headers: {'x-sup-api-key': apiKey, ...GameConstants.JSON_HEADERS},
-      body: jsonEncode({
-        "language": GameConstants.TTS_LANGUAGE,
-        "text": text,
-        "model": GameConstants.TTS_MODEL,
-        "voice_settings": GameConstants.TTS_VOICE_SETTINGS,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      return response.bodyBytes;
-    } else {
-      throw TTSException(
-        'TTS 요청에 실패했습니다.',
-        details: 'Status code: ${response.statusCode}',
-        originalError: response.body,
-      );
-    }
-  }
-}
+import 'package:loveloveraid/services/tts_service.dart' as tts;
 
 class GameScreenState {
   final List<DialogueLine> dialogueQueue;
@@ -119,7 +76,7 @@ class GameScreenController {
   final Function onEndChapter;
   final List<Npc> npcs;
   final GameApiService _apiService;
-  final TTSService _ttsService;
+  final tts.TTSService _ttsService;
 
   GameScreenState _state = GameScreenState();
   Timer? _textTimer;
@@ -154,7 +111,7 @@ class GameScreenController {
     required this.onEndChapter,
     required this.npcs,
   }) : _apiService = GameApiService(),
-       _ttsService = TTSService();
+       _ttsService = tts.TTSService();
 
   void _updateState(GameScreenState newState) {
     _state = newState;
@@ -457,10 +414,10 @@ class GameScreenController {
       final bytes = await _ttsService.generateSpeech(character, text);
       await player.setAudioSource(MyCustomSource(bytes));
       await player.play();
-    } on TTSException catch (e) {
+    } on tts.TTSException catch (e) {
       _handleError(e);
     } catch (e) {
-      _handleError(TTSException('TTS 처리 중 오류가 발생했습니다.', originalError: e));
+      _handleError(tts.TTSException('TTS 처리 중 오류가 발생했습니다.', originalError: e));
     }
   }
 

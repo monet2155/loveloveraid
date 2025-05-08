@@ -95,10 +95,20 @@ class GameScreenView extends StatelessWidget {
                           // TODO: 설정 화면으로 이동
                           break;
                         case 'save':
-                          // TODO: 저장 기능 구현
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('준비중입니다'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                           break;
                         case 'load':
-                          // TODO: 불러오기 기능 구현
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('준비중입니다'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                           break;
                         case 'exit':
                           // TODO: 종료 기능 구현

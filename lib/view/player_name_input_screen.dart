@@ -35,6 +35,7 @@ class PlayerNameInputScreen extends StatelessWidget {
                   controller: nameController,
                   style: TextStyle(color: Colors.pink.shade400), // 텍스트 색상 변경
                   textAlign: TextAlign.center,
+                  onSubmitted: (_) => onSubmit(),
                   decoration: InputDecoration(
                     hintText: '김겜돌',
                     hintStyle: TextStyle(color: Colors.pink.shade200),

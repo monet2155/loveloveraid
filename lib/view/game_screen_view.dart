@@ -222,13 +222,15 @@ class GameScreenView extends StatelessWidget {
   Positioned _buildHistoryButtonMenu() {
     return Positioned(
       top: 0,
+      bottom: 0,
       right: 0,
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           IconButton(
             icon: Icon(
-              Icons.arrow_back_ios,
+              Icons.arrow_upward,
               color:
                   controller.canGoToPreviousMessage
                       ? Colors.white
@@ -243,7 +245,7 @@ class GameScreenView extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(
-              Icons.arrow_forward_ios,
+              Icons.arrow_downward,
               color:
                   controller.canSendMessage
                       ? Colors.white30

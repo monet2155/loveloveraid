@@ -9,36 +9,7 @@ import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/model/step.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:loveloveraid/constants/game_constants.dart';
-
-const USING_TTS = false;
-
-// 커스텀 예외 클래스들
-class GameException implements Exception {
-  final String message;
-  final String? details;
-  final dynamic originalError;
-
-  GameException(this.message, {this.details, this.originalError});
-
-  @override
-  String toString() =>
-      'GameException: $message${details != null ? ' ($details)' : ''}';
-}
-
-class NetworkException extends GameException {
-  NetworkException(String message, {String? details, dynamic originalError})
-    : super(message, details: details, originalError: originalError);
-}
-
-class SessionException extends GameException {
-  SessionException(String message, {String? details, dynamic originalError})
-    : super(message, details: details, originalError: originalError);
-}
-
-class TTSException extends GameException {
-  TTSException(String message, {String? details, dynamic originalError})
-    : super(message, details: details, originalError: originalError);
-}
+import 'package:loveloveraid/exceptions/game_exception.dart';
 
 // API 서비스 클래스
 class GameApiService {
@@ -376,7 +347,7 @@ class GameScreenController {
           appearedCharacters: {..._state.appearedCharacters, currentCharacter},
         ),
       );
-      if (kDebugMode && USING_TTS) {
+      if (kDebugMode && GameConstants.USING_TTS) {
         if (player.playing) {
           player.stop();
         }

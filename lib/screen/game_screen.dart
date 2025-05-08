@@ -52,6 +52,12 @@ class _GameScreenState extends State<GameScreen> {
 
   void _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.keyV &&
+          HardwareKeyboard.instance.isControlPressed) {
+        _controller.handleKeyEvent(event);
+        return;
+      }
+
       if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
           event.logicalKey == LogicalKeyboardKey.arrowDown) {
         _controller.handleKeyEvent(event);

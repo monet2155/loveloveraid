@@ -45,6 +45,7 @@ class GameScreenController {
       (_state.isInHistoryView &&
           (_state.currentHistoryIndex < _state.dialogueHistory.length - 1));
   bool get isInHistoryView => _state.isInHistoryView;
+  bool get isUIVisible => _state.isUIVisible;
 
   GameScreenController({
     required this.playerName,
@@ -263,19 +264,28 @@ class GameScreenController {
     }
   }
 
+  void toggleUI() {
+    _updateState(_state.copyWith(isUIVisible: !_state.isUIVisible));
+  }
+
   void handleKeyEvent(KeyEvent event) {
-    if (event.logicalKey == LogicalKeyboardKey.enter) {
-      if (canSendMessage) {
-        onUpdate();
-      } else {
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.enter) {
+        if (canSendMessage) {
+          onUpdate();
+        } else {
+          skipOrNext();
+        }
+      } else if (event.logicalKey == LogicalKeyboardKey.space) {
         skipOrNext();
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        goToPreviousMessage();
+      } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        goToNextMessage();
+      } else if (event.logicalKey == LogicalKeyboardKey.keyV &&
+          HardwareKeyboard.instance.isControlPressed) {
+        toggleUI();
       }
-    } else if (event.logicalKey == LogicalKeyboardKey.space) {
-      skipOrNext();
-    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      goToPreviousMessage();
-    } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      goToNextMessage();
     }
   }
 

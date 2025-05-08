@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TitleScreenView extends StatelessWidget {
   final VoidCallback onStartNewGame;
@@ -64,6 +66,14 @@ class TitleScreenView extends StatelessWidget {
                 _buildMenuButton('이어하기', onContinue),
                 const SizedBox(height: 16),
                 _buildMenuButton('환경 설정', onOpenSettings),
+                if (kDebugMode) ...[
+                  const SizedBox(height: 16),
+                  _buildMenuButton('테스트 버튼', () async {
+                    SharedPreferences pref =
+                        await SharedPreferences.getInstance();
+                    pref.clear();
+                  }),
+                ],
                 const SizedBox(height: 16),
                 _buildMenuButton('게임 종료', onExitGame),
               ],

@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ResourceManager {
   static final ResourceManager _instance = ResourceManager._internal();
@@ -24,8 +26,13 @@ class ResourceManager {
       if (!await _resourcesDir.exists()) {
         print('게임 리소스 디렉토리 생성 중...');
         await _resourcesDir.create(recursive: true);
+        await downloadResources();
+      } else {
+        if (await checkForUpdates()) {
+          print('게임 리소스 업데이트 중...');
+          await downloadResources();
+        }
       }
-      await downloadResources();
 
       _isInitialized = true;
       print('게임 리소스 초기화 완료');
@@ -33,6 +40,21 @@ class ResourceManager {
       print('게임 리소스 초기화 중 오류 발생: $e');
       rethrow;
     }
+  }
+
+  Future<bool> checkForUpdates() async {
+    final firestore = FirebaseFirestore.instance;
+    final versionRef = firestore.collection('config').doc('resource_version');
+    final versionDoc = await versionRef.get();
+    final versionData = versionDoc.data();
+    final version = versionData?['resource_version'];
+    final pref = await SharedPreferences.getInstance();
+    final currentVersion = pref.getInt('resource_version');
+    print('최신 버전: $version / 현재 버전: $currentVersion');
+
+    pref.setInt('resource_version', version);
+
+    return version != currentVersion;
   }
 
   Future<void> downloadResources() async {

@@ -4,6 +4,7 @@ import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/screen/end_screen.dart';
 import 'package:loveloveraid/view/game_screen_view.dart';
+import 'package:loveloveraid/services/resource_manager.dart';
 
 class GameScreen extends StatefulWidget {
   final List<Npc> npcs;
@@ -72,6 +73,7 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return GameScreenView(
       controller: _controller,
+      resourceManager: ResourceManager(),
       textController: _textController,
       keyboardFocusNode: _keyboardFocusNode,
       textFieldFocusNode: _textFieldFocusNode,

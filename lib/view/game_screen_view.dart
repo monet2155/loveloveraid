@@ -62,6 +62,13 @@ class GameScreenView extends StatelessWidget {
                     itemBuilder:
                         (BuildContext context) => [
                           const PopupMenuItem<String>(
+                            value: 'help',
+                            child: Text(
+                              '도움말',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
                             value: 'settings',
                             child: Text(
                               '설정',
@@ -114,6 +121,50 @@ class GameScreenView extends StatelessWidget {
                               content: Text('준비중입니다'),
                               duration: Duration(seconds: 2),
                             ),
+                          );
+                          break;
+                        case 'help':
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                backgroundColor: Colors.black.withOpacity(0.9),
+                                title: const Text(
+                                  '도움말',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text(
+                                      '스페이스바 또는 엔터 : 진행',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      '위아래 방향키 : 대화 기록 보기',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      "'V' 키 : UI 숨기기/숨기기 해제",
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.of(context).pop(),
+                                    child: const Text(
+                                      '확인',
+                                      style: TextStyle(color: Colors.white70),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           );
                           break;
                         case 'home':

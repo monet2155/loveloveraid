@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
+import 'package:loveloveraid/services/resource_manager.dart';
+import 'dart:io';
 
 final alignments = [
   Alignment.bottomCenter,
@@ -11,6 +13,7 @@ final alignments = [
 
 class GameScreenView extends StatelessWidget {
   final GameScreenController controller;
+  final ResourceManager resourceManager;
   final TextEditingController textController;
   final FocusNode keyboardFocusNode;
   final FocusNode textFieldFocusNode;
@@ -20,6 +23,7 @@ class GameScreenView extends StatelessWidget {
   const GameScreenView({
     super.key,
     required this.controller,
+    required this.resourceManager,
     required this.textController,
     required this.keyboardFocusNode,
     required this.textFieldFocusNode,
@@ -212,7 +216,10 @@ class GameScreenView extends StatelessWidget {
 
   Widget _buildBackground() {
     return Positioned.fill(
-      child: Image.asset('assets/images/background.jpg', fit: BoxFit.cover),
+      child: Image.file(
+        File(resourceManager.getResourcePath('background.jpg')),
+        fit: BoxFit.cover,
+      ),
     );
   }
 
@@ -260,8 +267,12 @@ class GameScreenView extends StatelessWidget {
                         child: Align(
                           alignment: Alignment.topCenter,
                           heightFactor: 0.5,
-                          child: Image.asset(
-                            'assets/images/${character}_color.png',
+                          child: Image.file(
+                            File(
+                              resourceManager.getResourcePath(
+                                '${character}_color.png',
+                              ),
+                            ),
                             fit: BoxFit.contain,
                           ),
                         ),

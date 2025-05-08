@@ -11,6 +11,34 @@ import 'package:just_audio/just_audio.dart';
 
 const USING_TTS = false;
 
+// 커스텀 예외 클래스들
+class GameException implements Exception {
+  final String message;
+  final String? details;
+  final dynamic originalError;
+
+  GameException(this.message, {this.details, this.originalError});
+
+  @override
+  String toString() =>
+      'GameException: $message${details != null ? ' ($details)' : ''}';
+}
+
+class NetworkException extends GameException {
+  NetworkException(String message, {String? details, dynamic originalError})
+    : super(message, details: details, originalError: originalError);
+}
+
+class SessionException extends GameException {
+  SessionException(String message, {String? details, dynamic originalError})
+    : super(message, details: details, originalError: originalError);
+}
+
+class TTSException extends GameException {
+  TTSException(String message, {String? details, dynamic originalError})
+    : super(message, details: details, originalError: originalError);
+}
+
 class GameScreenState {
   final List<DialogueLine> dialogueQueue;
   final bool isDialoguePlaying;
@@ -149,8 +177,7 @@ class GameScreenController {
         final decodedBody = json.decode(utf8.decode(response.bodyBytes));
         final Map<String, dynamic> data = decodedBody;
         if (data['dialogue'] == null) {
-          addErrorDialogueLine('서버에서 대화 내용을 가져오지 못했습니다.');
-          return;
+          throw NetworkException('서버에서 대화 내용을 가져오지 못했습니다.');
         }
 
         // 대화 히스토리에 플레이어 메시지 추가
@@ -185,12 +212,16 @@ class GameScreenController {
           }
         }
       } else {
-        print(utf8.decode(response.bodyBytes));
-        addErrorDialogueLine('서버와의 통신 중 오류가 발생했습니다.');
+        throw NetworkException(
+          '서버와의 통신 중 오류가 발생했습니다.',
+          details: 'Status code: ${response.statusCode}',
+          originalError: utf8.decode(response.bodyBytes),
+        );
       }
+    } on NetworkException catch (e) {
+      _handleError(e);
     } catch (e) {
-      print('서버와의 통신 중 오류 발생: $e');
-      addErrorDialogueLine('서버와의 통신 중 오류가 발생했습니다.');
+      _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
     } finally {
       _updateState(_state.copyWith(isLoading: false));
     }
@@ -358,13 +389,10 @@ class GameScreenController {
     final eventId = dotenv.env['EVENT_ID'];
 
     if (universeId == null || apiUrl == null || eventId == null) {
-      addDialogueQueue('시스템', '환경변수가 누락되었습니다.');
-      _playNextLine();
-      return;
+      throw SessionException('환경변수가 누락되었습니다.');
     }
 
-    final playerId =
-        '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1'; // 이후 실제 사용자 ID 연동 가능
+    final playerId = '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1';
 
     try {
       final res = await http.post(
@@ -382,15 +410,16 @@ class GameScreenController {
         _updateState(_state.copyWith(sessionId: data['session_id']));
         await getInitialEvent(eventId);
       } else {
-        print('세션 시작 실패: ${res.statusCode}');
-        print('응답 본문: ${utf8.decode(res.bodyBytes)}');
-        addErrorDialogueLine('세션 시작에 실패했습니다.');
-        _playNextLine();
+        throw SessionException(
+          '세션 시작에 실패했습니다.',
+          details: 'Status code: ${res.statusCode}',
+          originalError: utf8.decode(res.bodyBytes),
+        );
       }
+    } on SessionException catch (e) {
+      _handleError(e);
     } catch (e) {
-      print('세션 초기화 오류: $e');
-      addErrorDialogueLine('세션 초기화 중 오류가 발생했습니다.');
-      _playNextLine();
+      _handleError(SessionException('세션 초기화 중 오류가 발생했습니다.', originalError: e));
     }
   }
 
@@ -423,17 +452,20 @@ class GameScreenController {
 
           addDialogueQueue(character, text);
         }
-        _playNextLine(); // 모든 스텝을 큐에 추가한 후 한 번만 호출
-      } else {
-        print('세션 시작 실패: ${res.statusCode}');
-        print('응답 본문: ${res.body}');
-        addErrorDialogueLine('세션 시작에 실패했습니다.');
         _playNextLine();
+      } else {
+        throw NetworkException(
+          '초기 이벤트 로딩에 실패했습니다.',
+          details: 'Status code: ${res.statusCode}',
+          originalError: res.body,
+        );
       }
+    } on NetworkException catch (e) {
+      _handleError(e);
     } catch (e) {
-      print('초기 이벤트 로딩 오류: $e');
-      addErrorDialogueLine('초기 이벤트 로딩 중 오류가 발생했습니다.');
-      _playNextLine();
+      _handleError(
+        NetworkException('초기 이벤트 로딩 중 오류가 발생했습니다.', originalError: e),
+      );
     }
   }
 
@@ -450,43 +482,66 @@ class GameScreenController {
     addDialogueQueue('시스템', '오류 발생: $error');
   }
 
-  void playTTS(String character, String text) async {
-    List<Map> voiceId = [
-      {"name": "이서아", "id": "hkzbhWknLqbwz8Jw8RYVyV"},
-      {"name": "강지연", "id": "c1fEJ6TaHYha7ACMr7Cj3r"},
-      {"name": "윤하린", "id": "gdvdX3oHN69chfYqyro9UE"},
-    ];
+  Future<void> playTTS(String character, String text) async {
+    try {
+      List<Map> voiceId = [
+        {"name": "이서아", "id": "hkzbhWknLqbwz8Jw8RYVyV"},
+        {"name": "강지연", "id": "c1fEJ6TaHYha7ACMr7Cj3r"},
+        {"name": "윤하린", "id": "gdvdX3oHN69chfYqyro9UE"},
+      ];
 
-    final apiUrl = dotenv.env['SUPERTONE_API_URL'];
-    final res = await http.post(
-      Uri.parse(
-        "$apiUrl/text-to-speech/${voiceId.firstWhere((v) => v['name'] == character)['id']}",
-      ),
-      headers: {
-        'x-sup-api-key': dotenv.env['SUPERTONE_API_KEY']!,
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        "language": "ko",
-        "text": text,
-        "model": "turbo",
-        "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 1},
-      }),
-    );
+      final apiUrl = dotenv.env['SUPERTONE_API_URL'];
+      final apiKey = dotenv.env['SUPERTONE_API_KEY'];
 
-    if (res.statusCode == 200) {
-      try {
-        final bytes = res.bodyBytes;
-
-        await player.setAudioSource(MyCustomSource(bytes));
-        await player.play();
-      } catch (e) {
-        print("오디오 재생 실패: $e");
+      if (apiUrl == null || apiKey == null) {
+        throw TTSException('TTS API 설정이 누락되었습니다.');
       }
-    } else {
-      print('TTS 요청 실패: ${res.statusCode}');
-      print('응답 본문: ${res.body}');
+
+      final voice = voiceId.firstWhere(
+        (v) => v['name'] == character,
+        orElse: () => throw TTSException('해당 캐릭터의 음성을 찾을 수 없습니다: $character'),
+      );
+
+      final res = await http.post(
+        Uri.parse("$apiUrl/text-to-speech/${voice['id']}"),
+        headers: {'x-sup-api-key': apiKey, 'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "language": "ko",
+          "text": text,
+          "model": "turbo",
+          "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 1},
+        }),
+      );
+
+      if (res.statusCode == 200) {
+        try {
+          final bytes = res.bodyBytes;
+          await player.setAudioSource(MyCustomSource(bytes));
+          await player.play();
+        } catch (e) {
+          throw TTSException('오디오 재생에 실패했습니다.', originalError: e);
+        }
+      } else {
+        throw TTSException(
+          'TTS 요청에 실패했습니다.',
+          details: 'Status code: ${res.statusCode}',
+          originalError: res.body,
+        );
+      }
+    } on TTSException catch (e) {
+      _handleError(e);
+    } catch (e) {
+      _handleError(TTSException('TTS 처리 중 오류가 발생했습니다.', originalError: e));
     }
+  }
+
+  void _handleError(GameException error) {
+    print('Error: ${error.toString()}');
+    if (error.originalError != null) {
+      print('Original error: ${error.originalError}');
+    }
+    addErrorDialogueLine(error.message);
+    _playNextLine();
   }
 }
 

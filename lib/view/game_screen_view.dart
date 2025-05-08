@@ -241,7 +241,7 @@ class GameScreenView extends StatelessWidget {
                 controller.canGoToPreviousMessage
                     ? controller.goToPreviousMessage
                     : null,
-            tooltip: '이전 대화',
+            tooltip: '이전 대화 (위쪽 방향키)',
           ),
           IconButton(
             icon: Icon(
@@ -260,7 +260,7 @@ class GameScreenView extends StatelessWidget {
                     : controller.isInHistoryView
                     ? controller.goToNextMessage
                     : controller.skipOrNext,
-            tooltip: '다음 대화',
+            tooltip: '다음 대화 (아래쪽 방향키)',
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
+import 'package:loveloveraid/screen/title_screen.dart';
 
 final alignments = [
   Alignment.bottomCenter,
@@ -82,9 +83,9 @@ class GameScreenView extends StatelessWidget {
                             ),
                           ),
                           const PopupMenuItem<String>(
-                            value: 'exit',
+                            value: 'home',
                             child: Text(
-                              '종료하기',
+                              '홈으로',
                               style: TextStyle(color: Colors.white70),
                             ),
                           ),
@@ -92,7 +93,12 @@ class GameScreenView extends StatelessWidget {
                     onSelected: (String value) {
                       switch (value) {
                         case 'settings':
-                          // TODO: 설정 화면으로 이동
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('준비중입니다'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
                           break;
                         case 'save':
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -110,8 +116,13 @@ class GameScreenView extends StatelessWidget {
                             ),
                           );
                           break;
-                        case 'exit':
-                          // TODO: 종료 기능 구현
+                        case 'home':
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => const TitleScreen(),
+                            ),
+                            (route) => false,
+                          );
                           break;
                       }
                     },

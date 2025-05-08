@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/model/step.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:loveloveraid/constants/game_constants.dart';
 
 const USING_TTS = false;
 
@@ -45,8 +46,8 @@ class GameApiService {
   final String? provider;
 
   GameApiService()
-    : baseUrl = dotenv.env['API_URL'] ?? '',
-      provider = dotenv.env['LLM_PROVIDER'];
+    : baseUrl = dotenv.env[GameConstants.API_BASE_URL] ?? '',
+      provider = dotenv.env[GameConstants.API_PROVIDER];
 
   Future<String> startSession(
     String universeId,
@@ -56,7 +57,7 @@ class GameApiService {
   ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/npc/$universeId/start-session'),
-      headers: {'Content-Type': 'application/json'},
+      headers: GameConstants.JSON_HEADERS,
       body: jsonEncode({
         'player_id': playerId,
         'event_id': eventId,
@@ -79,7 +80,7 @@ class GameApiService {
   Future<List<Step>> getInitialEvent(String eventId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/event/$eventId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: GameConstants.JSON_HEADERS,
     );
 
     if (response.statusCode == 200) {
@@ -101,7 +102,7 @@ class GameApiService {
       Uri.parse(
         '$baseUrl/npc/$sessionId/dialogue${provider != null ? "?provider=$provider" : ""}',
       ),
-      headers: {'Content-Type': 'application/json'},
+      headers: GameConstants.JSON_HEADERS,
       body: jsonEncode({'player_input': message}),
     );
 
@@ -129,33 +130,27 @@ class TTSService {
   final String apiKey;
 
   TTSService()
-    : baseUrl = dotenv.env['SUPERTONE_API_URL'] ?? '',
-      apiKey = dotenv.env['SUPERTONE_API_KEY'] ?? '';
-
-  static const List<Map<String, String>> voiceIds = [
-    {"name": "이서아", "id": "hkzbhWknLqbwz8Jw8RYVyV"},
-    {"name": "강지연", "id": "c1fEJ6TaHYha7ACMr7Cj3r"},
-    {"name": "윤하린", "id": "gdvdX3oHN69chfYqyro9UE"},
-  ];
+    : baseUrl = dotenv.env[GameConstants.SUPERTONE_API_URL] ?? '',
+      apiKey = dotenv.env[GameConstants.SUPERTONE_API_KEY] ?? '';
 
   Future<List<int>> generateSpeech(String character, String text) async {
     if (baseUrl.isEmpty || apiKey.isEmpty) {
       throw TTSException('TTS API 설정이 누락되었습니다.');
     }
 
-    final voice = voiceIds.firstWhere(
+    final voice = GameConstants.TTS_VOICE_IDS.firstWhere(
       (v) => v['name'] == character,
       orElse: () => throw TTSException('해당 캐릭터의 음성을 찾을 수 없습니다: $character'),
     );
 
     final response = await http.post(
       Uri.parse("$baseUrl/text-to-speech/${voice['id']}"),
-      headers: {'x-sup-api-key': apiKey, 'Content-Type': 'application/json'},
+      headers: {'x-sup-api-key': apiKey, ...GameConstants.JSON_HEADERS},
       body: jsonEncode({
-        "language": "ko",
+        "language": GameConstants.TTS_LANGUAGE,
         "text": text,
-        "model": "turbo",
-        "voice_settings": {"pitch_shift": 0, "pitch_variance": 1, "speed": 1},
+        "model": GameConstants.TTS_MODEL,
+        "voice_settings": GameConstants.TTS_VOICE_SETTINGS,
       }),
     );
 
@@ -243,7 +238,9 @@ class GameScreenController {
   Timer? _textTimer;
   final player = AudioPlayer();
 
-  static const Duration textSpeed = Duration(milliseconds: 40);
+  static const Duration textSpeed = Duration(
+    milliseconds: GameConstants.TEXT_SPEED_MS,
+  );
 
   String get currentCharacter => _state.currentLine?.character ?? '';
   String get visibleText => _state.visibleText;
@@ -315,8 +312,8 @@ class GameScreenController {
       );
 
       for (var text in dialogueList) {
-        if (text == "**!!END!!**") {
-          addDialogueQueue('시스템', '대화가 종료되었습니다.');
+        if (text == GameConstants.END_DIALOGUE_MARKER) {
+          addDialogueQueue(GameConstants.SYSTEM_CHARACTER, '대화가 종료되었습니다.');
           break;
         }
 
@@ -498,19 +495,17 @@ class GameScreenController {
   }
 
   Future<void> initSession() async {
-    final universeId = dotenv.env['UNIVERSE_ID'];
-    final eventId = dotenv.env['EVENT_ID'];
+    final universeId = dotenv.env[GameConstants.UNIVERSE_ID];
+    final eventId = dotenv.env[GameConstants.EVENT_ID];
 
     if (universeId == null || eventId == null) {
       throw SessionException('환경변수가 누락되었습니다.');
     }
 
-    final playerId = '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1';
-
     try {
       final sessionId = await _apiService.startSession(
         universeId,
-        playerId,
+        GameConstants.PLAYER_ID,
         eventId,
         npcs.map((npc) => npc.id).toList(),
       );
@@ -533,11 +528,11 @@ class GameScreenController {
         String character = "";
 
         if (speakerType == 'PLAYER') {
-          character = '플레이어';
+          character = GameConstants.PLAYER_CHARACTER;
         } else if (speakerType == 'NPC') {
           character = npcs.firstWhere((c) => c.id == stepData.speakerId).name;
         } else if (speakerType == 'SYSTEM') {
-          character = '시스템';
+          character = GameConstants.SYSTEM_CHARACTER;
         }
 
         addDialogueQueue(character, text);
@@ -562,10 +557,15 @@ class GameScreenController {
   }
 
   void addErrorDialogueLine(String error) {
-    addDialogueQueue('시스템', '오류 발생: $error');
+    addDialogueQueue(
+      GameConstants.SYSTEM_CHARACTER,
+      '${GameConstants.ERROR_PREFIX}$error',
+    );
   }
 
   Future<void> playTTS(String character, String text) async {
+    if (!GameConstants.USING_TTS) return;
+
     try {
       final bytes = await _ttsService.generateSpeech(character, text);
       await player.setAudioSource(MyCustomSource(bytes));

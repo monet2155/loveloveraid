@@ -43,6 +43,71 @@ class GameScreenView extends StatelessWidget {
               _buildCharacterImages(),
               _buildDialogAndInput(),
               if (controller.isInHistoryView) _buildHistoryIndicator(),
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.menu, color: Colors.white70),
+                    tooltip: '메뉴',
+                    color: Colors.black.withOpacity(0.9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    itemBuilder:
+                        (BuildContext context) => [
+                          const PopupMenuItem<String>(
+                            value: 'settings',
+                            child: Text(
+                              '설정',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'save',
+                            child: Text(
+                              '저장하기',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'load',
+                            child: Text(
+                              '불러오기',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'exit',
+                            child: Text(
+                              '종료하기',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ],
+                    onSelected: (String value) {
+                      switch (value) {
+                        case 'settings':
+                          // TODO: 설정 화면으로 이동
+                          break;
+                        case 'save':
+                          // TODO: 저장 기능 구현
+                          break;
+                        case 'load':
+                          // TODO: 불러오기 기능 구현
+                          break;
+                        case 'exit':
+                          // TODO: 종료 기능 구현
+                          break;
+                      }
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -53,7 +118,7 @@ class GameScreenView extends StatelessWidget {
   Widget _buildHistoryIndicator() {
     return Positioned(
       top: 20,
-      right: 20,
+      left: 20,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(

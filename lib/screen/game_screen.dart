@@ -73,7 +73,6 @@ class _GameScreenState extends State<GameScreen> {
   Widget build(BuildContext context) {
     return GameScreenView(
       controller: _controller,
-      resourceManager: ResourceManager(),
       textController: _textController,
       keyboardFocusNode: _keyboardFocusNode,
       textFieldFocusNode: _textFieldFocusNode,

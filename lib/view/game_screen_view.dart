@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
@@ -13,7 +15,6 @@ final alignments = [
 
 class GameScreenView extends StatelessWidget {
   final GameScreenController controller;
-  final ResourceManager resourceManager;
   final TextEditingController textController;
   final FocusNode keyboardFocusNode;
   final FocusNode textFieldFocusNode;
@@ -23,7 +24,6 @@ class GameScreenView extends StatelessWidget {
   const GameScreenView({
     super.key,
     required this.controller,
-    required this.resourceManager,
     required this.textController,
     required this.keyboardFocusNode,
     required this.textFieldFocusNode,
@@ -215,11 +215,14 @@ class GameScreenView extends StatelessWidget {
   }
 
   Widget _buildBackground() {
-    return Positioned.fill(
-      child: Image.file(
-        File(resourceManager.getResourcePath('background.jpg')),
-        fit: BoxFit.cover,
-      ),
+    return FutureBuilder<Uint8List>(
+      future: ResourceManager().readEncryptedBinary('background.jpg'),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox();
+        return Positioned.fill(
+          child: Image.memory(snapshot.data!, fit: BoxFit.cover),
+        );
+      },
     );
   }
 
@@ -267,13 +270,17 @@ class GameScreenView extends StatelessWidget {
                         child: Align(
                           alignment: Alignment.topCenter,
                           heightFactor: 0.5,
-                          child: Image.file(
-                            File(
-                              resourceManager.getResourcePath(
-                                '${character}_color.png',
-                              ),
+                          child: FutureBuilder<Uint8List>(
+                            future: ResourceManager().readEncryptedBinary(
+                              '${character}_color.png',
                             ),
-                            fit: BoxFit.contain,
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData) return const SizedBox();
+                              return Image.memory(
+                                snapshot.data!,
+                                fit: BoxFit.contain,
+                              );
+                            },
                           ),
                         ),
                       ),

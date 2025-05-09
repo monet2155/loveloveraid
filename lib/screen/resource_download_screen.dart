@@ -25,7 +25,7 @@ class _ResourceDownloadScreenState extends State<ResourceDownloadScreen> {
     });
 
     try {
-      await ResourceManager().initialize(
+      await ResourceManager().update(
         onProgress: (progress) {
           setState(() {
             _progress = progress;

@@ -28,6 +28,9 @@ class ResourceManager {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
+    final appDir = await getApplicationSupportDirectory();
+    _resourcesDir = Directory(path.join(appDir.path, 'game_resources'));
+
     final keyString = dotenv.env['FILE_DOWNLOAD_SECRET'];
     if (keyString == null || keyString.length != 32) {
       throw Exception('FILE_DOWNLOAD_SECRET 환경 변수가 설정되지 않았거나 32바이트가 아님.');

@@ -6,6 +6,8 @@ import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/view/player_name_input_screen.dart';
 import 'package:loveloveraid/view/title_screen_view.dart';
 import 'package:loveloveraid/screen/game_screen.dart';
+import 'package:loveloveraid/screen/resource_download_screen.dart';
+import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:http/http.dart' as http;
 
 class TitleScreen extends StatefulWidget {
@@ -18,11 +20,55 @@ class TitleScreen extends StatefulWidget {
 class _TitleScreenState extends State<TitleScreen> {
   List<Npc> npcs = [];
   final TextEditingController nameController = TextEditingController();
+  bool _isCheckingResources = true;
 
   @override
   void initState() {
     super.initState();
-    initGame();
+    _checkResources();
+  }
+
+  Future<void> _checkResources() async {
+    try {
+      final needsUpdate = await ResourceManager().checkForUpdates();
+      if (needsUpdate) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text('리소스 업데이트'),
+                  content: const Text('게임 리소스 다운로드가 필요합니다.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder:
+                                (context) => const ResourceDownloadScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('확인'),
+                    ),
+                  ],
+                ),
+          );
+        }
+      } else {
+        initGame();
+      }
+    } catch (e) {
+      print('리소스 체크 중 오류 발생: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCheckingResources = false;
+        });
+      }
+    }
   }
 
   void initGame() async {
@@ -54,6 +100,10 @@ class _TitleScreenState extends State<TitleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingResources) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return TitleScreenView(
       onStartNewGame: () {
         // Navigator.of(context).pushReplacement(

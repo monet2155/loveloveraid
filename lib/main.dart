@@ -2,9 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
-import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:window_size/window_size.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // ✅ 추가
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:loveloveraid/firebase_options.dart';
 
@@ -18,8 +17,6 @@ void main() async {
   }
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  await ResourceManager().initialize();
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     const minSize = Size(1280, 720);

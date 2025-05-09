@@ -1,11 +1,8 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
-import 'dart:io';
 
 final alignments = [
   Alignment.bottomCenter,
@@ -215,14 +212,11 @@ class GameScreenView extends StatelessWidget {
   }
 
   Widget _buildBackground() {
-    return FutureBuilder<Uint8List>(
-      future: ResourceManager().readEncryptedBinary('background.jpg'),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const SizedBox();
-        return Positioned.fill(
-          child: Image.memory(snapshot.data!, fit: BoxFit.cover),
-        );
-      },
+    return Positioned.fill(
+      child: Image.memory(
+        ResourceManager().imageCache['background.jpg']!,
+        fit: BoxFit.cover,
+      ),
     );
   }
 
@@ -247,7 +241,6 @@ class GameScreenView extends StatelessWidget {
           if (b == '이서아') return 1;
           return a.compareTo(b);
         });
-
         return Align(
           alignment: Alignment.bottomCenter,
           child: Stack(
@@ -270,17 +263,10 @@ class GameScreenView extends StatelessWidget {
                         child: Align(
                           alignment: Alignment.topCenter,
                           heightFactor: 0.5,
-                          child: FutureBuilder<Uint8List>(
-                            future: ResourceManager().readEncryptedBinary(
-                              '${character}_color.png',
-                            ),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData) return const SizedBox();
-                              return Image.memory(
-                                snapshot.data!,
-                                fit: BoxFit.contain,
-                              );
-                            },
+                          child: Image.memory(
+                            ResourceManager()
+                                .imageCache['${character}_color.png']!,
+                            fit: BoxFit.contain,
                           ),
                         ),
                       ),

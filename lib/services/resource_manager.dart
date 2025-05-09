@@ -20,6 +20,12 @@ class ResourceManager {
   late encrypt.Key _encryptionKey;
   late encrypt.Encrypter _encrypter;
 
+  // 이미지 캐시 추가
+  final Map<String, Uint8List> _imageCache = {};
+
+  // 이미지 캐시 getter 추가
+  Map<String, Uint8List> get imageCache => _imageCache;
+
   bool get isInitialized => _isInitialized;
 
   int latestVersion = 0;
@@ -46,8 +52,6 @@ class ResourceManager {
     }
 
     try {
-      final appDir = await getApplicationSupportDirectory();
-      _resourcesDir = Directory(path.join(appDir.path, 'game_resources'));
       print('게임 리소스 디렉토리 경로: ${_resourcesDir.path}');
       if (!await _resourcesDir.exists()) {
         print('게임 리소스 디렉토리 생성 중...');
@@ -123,7 +127,7 @@ class ResourceManager {
     if (!_isInitialized) {
       throw Exception('ResourceManager가 초기화되지 않았습니다.');
     }
-    return '${_resourcesDir.path}/$fileName';
+    return path.join(_resourcesDir.path, fileName);
   }
 
   Future<String> readEncryptedJson(String fileName) async {
@@ -137,6 +141,13 @@ class ResourceManager {
   Future<Uint8List> readEncryptedBinary(String fileName) async {
     try {
       print('readEncryptedBinary 호출: $fileName');
+
+      // 캐시된 이미지가 있으면 반환
+      if (_imageCache.containsKey(fileName)) {
+        print('캐시된 이미지 반환: $fileName');
+        return _imageCache[fileName]!;
+      }
+
       final file = File(getResourcePath(fileName));
       final bytes = await file.readAsBytes();
       final iv = encrypt.IV(Uint8List.sublistView(bytes, 0, 16));
@@ -144,11 +155,23 @@ class ResourceManager {
         Uint8List.sublistView(bytes, 16),
       );
       final decrypted = _encrypter.decryptBytes(encryptedBytes, iv: iv);
+
+      // 이미지 파일인 경우에만 캐시에 저장
+      if (fileName.endsWith('.png') || fileName.endsWith('.jpg')) {
+        print('캐시에 저장: $fileName');
+        _imageCache[fileName] = Uint8List.fromList(decrypted);
+      }
+
       print('readEncryptedBinary 완료: $fileName');
       return Uint8List.fromList(decrypted);
     } catch (e) {
       print('readEncryptedBinary 오류: $e');
       rethrow;
     }
+  }
+
+  // 캐시 초기화 메서드 추가
+  void clearImageCache() {
+    _imageCache.clear();
   }
 }

@@ -9,6 +9,7 @@ import 'package:loveloveraid/screen/game_screen.dart';
 import 'package:loveloveraid/screen/resource_download_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:http/http.dart' as http;
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class TitleScreen extends StatefulWidget {
   const TitleScreen({super.key});
@@ -25,7 +26,43 @@ class _TitleScreenState extends State<TitleScreen> {
   @override
   void initState() {
     super.initState();
-    _checkResources();
+    _checkInternetConnection();
+  }
+
+  Future<void> _checkInternetConnection() async {
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult.contains(ConnectivityResult.none)) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text('인터넷 연결 오류'),
+                  content: const Text('인터넷 연결이 필요합니다'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => const TitleScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text('확인'),
+                    ),
+                  ],
+                ),
+          );
+        }
+        return;
+      }
+      _checkResources();
+    } catch (e) {
+      print('인터넷 연결 확인 중 오류 발생: $e');
+    }
   }
 
   Future<void> _checkResources() async {

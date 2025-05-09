@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart' as path;
 
 class ResourceManager {
   static final ResourceManager _instance = ResourceManager._internal();
@@ -27,8 +28,10 @@ class ResourceManager {
     }
 
     try {
-      final appDir = await getApplicationDocumentsDirectory();
-      _resourcesDir = Directory('${appDir.path}/game_resources');
+      final appDir = await getApplicationSupportDirectory();
+      _resourcesDir = Directory(path.join(appDir.path, 'game_resources'));
+
+      print(_resourcesDir.path);
 
       if (!await _resourcesDir.exists()) {
         print('게임 리소스 디렉토리 생성 중...');

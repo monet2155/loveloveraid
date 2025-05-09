@@ -55,11 +55,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
               .toList();
 
       for (var file in imageFiles) {
-        if (mounted) {
-          setState(() {
-            _currentFile = path.basename(file.path);
-          });
-        }
+        _currentFile = path.basename(file.path);
         await resourceManager.readEncryptedBinary(_currentFile);
       }
 

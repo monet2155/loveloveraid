@@ -10,6 +10,7 @@ import 'package:loveloveraid/screen/resource_download_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:loveloveraid/screen/loading_screen.dart';
 
 class TitleScreen extends StatefulWidget {
   const TitleScreen({super.key});
@@ -143,10 +144,6 @@ class _TitleScreenState extends State<TitleScreen> {
 
     return TitleScreenView(
       onStartNewGame: () {
-        // Navigator.of(context).pushReplacement(
-        //   MaterialPageRoute(builder: (context) => GameScreen(npcs: npcs)),
-        // );
-
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder:
@@ -156,7 +153,7 @@ class _TitleScreenState extends State<TitleScreen> {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder:
-                            (context) => GameScreen(
+                            (context) => LoadingScreen(
                               npcs: npcs,
                               playerName:
                                   nameController.text.isEmpty

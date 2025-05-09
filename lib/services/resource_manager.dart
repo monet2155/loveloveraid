@@ -31,8 +31,6 @@ class ResourceManager {
       final appDir = await getApplicationSupportDirectory();
       _resourcesDir = Directory(path.join(appDir.path, 'game_resources'));
 
-      print(_resourcesDir.path);
-
       if (!await _resourcesDir.exists()) {
         print('게임 리소스 디렉토리 생성 중...');
         await _resourcesDir.create(recursive: true);

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:loveloveraid/model/character_resource_dto.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as path;
@@ -31,6 +32,9 @@ class ResourceManager {
   int latestVersion = 0;
   int currentVersion = 0;
 
+  List<String> resourceNames = [];
+  List<CharacterResourceDto> characterResources = [];
+
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -43,7 +47,24 @@ class ResourceManager {
     }
     _encryptionKey = encrypt.Key.fromUtf8(keyString);
     _encrypter = encrypt.Encrypter(encrypt.AES(_encryptionKey));
+    await fetchCharacterResources();
     _isInitialized = true;
+  }
+
+  Future<void> fetchCharacterResources() async {
+    final firestore = FirebaseFirestore.instance;
+    final characterResourcesRef = firestore.collection('character');
+    final characterResourcesDoc = await characterResourcesRef.get();
+    final characterResourcesData =
+        characterResourcesDoc.docs
+            .map(
+              (doc) => CharacterResourceDto.fromJson({
+                'id': doc.id,
+                'name': doc.data()['name'],
+              }),
+            )
+            .toList();
+    characterResources = characterResourcesData;
   }
 
   Future<void> update({void Function(double)? onProgress}) async {
@@ -77,6 +98,11 @@ class ResourceManager {
     final versionData = versionDoc.data();
     print('최신 버전: ${versionData?['resource_version']}');
     latestVersion = versionData?['resource_version'] ?? 0;
+    print(versionData?['resources']);
+    resourceNames =
+        (versionData?['resources'] as List<dynamic>)
+            .map((e) => e as String)
+            .toList();
   }
 
   Future<bool> checkForUpdates() async {
@@ -91,15 +117,15 @@ class ResourceManager {
   Future<void> downloadResources({void Function(double)? onProgress}) async {
     final storage = FirebaseStorage.instance;
     final resourcesRef = storage.ref().child('resources');
-    final result = await resourcesRef.listAll();
 
     int completedItems = 0;
-    final totalItems = result.items.length;
+    final totalItems = resourceNames.length;
 
-    for (var item in result.items) {
+    for (var name in resourceNames) {
+      final item = resourcesRef.child(name);
       final downloadUrl = await item.getDownloadURL();
       final fileName = item.name;
-      final localFile = File('${_resourcesDir.path}/$fileName');
+      final localFile = File(path.join(_resourcesDir.path, fileName));
       final response = await http.get(Uri.parse(downloadUrl));
       if (response.statusCode != 200) continue;
 

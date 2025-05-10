@@ -3,7 +3,6 @@ import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
-import "package:unorm_dart/unorm_dart.dart" as unorm;
 
 final alignments = [
   Alignment.bottomCenter,
@@ -253,12 +252,14 @@ class GameScreenView extends StatelessWidget {
                   final padding = constraints.maxWidth / total;
                   final offsetX = (index - (total - 1) / 2) * padding;
                   final isNew = newlyAppearedCharacters.contains(character);
-                  final characterImage = ResourceManager().imageCache.entries
-                      .firstWhere(
-                        (entry) =>
-                            unorm.nfc(entry.key) ==
-                            unorm.nfc('${character}_color.png'),
-                      );
+
+                  final characterId =
+                      ResourceManager().characterResources
+                          .firstWhere((element) => element.name == character)
+                          .id;
+                  final characterImage =
+                      ResourceManager()
+                          .imageCache['${characterId}_001.png']!; //TODO: 자세별 이미지
 
                   final baseContent = Transform.translate(
                     offset: Offset(offsetX, 0),
@@ -271,7 +272,7 @@ class GameScreenView extends StatelessWidget {
                           alignment: Alignment.topCenter,
                           heightFactor: 0.5,
                           child: Image.memory(
-                            characterImage.value,
+                            characterImage,
                             fit: BoxFit.contain,
                           ),
                         ),

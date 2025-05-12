@@ -60,7 +60,8 @@ class _TitleScreenState extends State<TitleScreen> {
         }
         return;
       }
-      await _checkDemoPeriod();
+      // await _checkDemoPeriod();
+      _checkResources();
     } catch (e) {
       print('인터넷 연결 확인 중 오류 발생: $e');
     }

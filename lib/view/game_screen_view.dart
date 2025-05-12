@@ -247,8 +247,8 @@ class GameScreenView extends StatelessWidget {
             alignment: Alignment.bottomCenter,
             children:
                 orderedRenderedCharacters.map((character) {
-                  final index = appearedCharacters.indexOf(character);
-                  final total = appearedCharacters.length;
+                  final index = orderedRenderedCharacters.indexOf(character);
+                  final total = orderedRenderedCharacters.length;
                   final padding = constraints.maxWidth / total;
                   final offsetX = (index - (total - 1) / 2) * padding;
                   final isNew = newlyAppearedCharacters.contains(character);

@@ -47,6 +47,8 @@ class GameScreenController {
   bool get isInHistoryView => _state.isInHistoryView;
   bool get isUIVisible => _state.isUIVisible;
 
+  bool isEnd = false;
+
   GameScreenController({
     required this.playerName,
     required this.onUpdate,
@@ -85,6 +87,10 @@ class GameScreenController {
         message,
       );
 
+      if (dialogueResponse.state == "ended") {
+        isEnd = true;
+      }
+
       // 대화 히스토리에 플레이어 메시지 추가
       final newHistory = [
         ..._state.dialogueHistory,
@@ -99,7 +105,7 @@ class GameScreenController {
       );
 
       for (var response in dialogueResponse.responses) {
-        addDialogueQueue(response.npc, response.dialogue);
+        addDialogueQueue(response.character, response.text);
       }
     } catch (e) {
       _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
@@ -115,17 +121,16 @@ class GameScreenController {
       _updateState(
         _state.copyWith(isDialoguePlaying: false, isWaitingForTap: false),
       );
+      if (isEnd) {
+        onEndChapter();
+        return;
+      }
       return;
     }
 
     final currentLine = _state.dialogueQueue.first;
     final newQueue = List<DialogueLine>.from(_state.dialogueQueue)..removeAt(0);
     final fullText = currentLine.text;
-
-    if (fullText == "대화가 종료되었습니다.") {
-      onEndChapter();
-      return;
-    }
 
     // 대화 히스토리에 현재 라인 추가
     final newHistory = [..._state.dialogueHistory, currentLine];

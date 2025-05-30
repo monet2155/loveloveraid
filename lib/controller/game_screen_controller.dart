@@ -271,6 +271,9 @@ class GameScreenController {
   }
 
   void handleKeyEvent(KeyEvent event) {
+    // 로딩중에 키보드 이벤트 처리 return
+    if (_state.isLoading) return;
+
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
         if (canSendMessage) {

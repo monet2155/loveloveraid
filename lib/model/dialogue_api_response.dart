@@ -1,7 +1,7 @@
-import 'dialogue_response.dart';
+import 'dialogue_line.dart';
 
 class DialogueApiResponse {
-  final List<DialogueResponse> responses;
+  final List<DialogueLine> responses;
   final String state;
 
   DialogueApiResponse({required this.responses, required this.state});
@@ -10,7 +10,7 @@ class DialogueApiResponse {
     return DialogueApiResponse(
       responses:
           (json['responses'] as List)
-              .map((response) => DialogueResponse.fromJson(response))
+              .map((response) => DialogueLine.fromJson(response))
               .toList(),
       state: json['state'],
     );

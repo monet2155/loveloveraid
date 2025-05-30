@@ -6,8 +6,8 @@ class DialogueLine {
 
   factory DialogueLine.fromJson(Map<String, dynamic> json) {
     return DialogueLine(
-      character: json['character'] as String,
-      text: json['text'] as String,
+      character: json['npc'] as String,
+      text: json['dialogue'] as String,
     );
   }
 }

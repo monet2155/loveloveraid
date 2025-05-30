@@ -4,34 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/constants/game_constants.dart';
 import 'package:loveloveraid/exceptions/game_exception.dart';
 import 'package:loveloveraid/model/step.dart';
-
-class DialogueResponse {
-  final String npc;
-  final String dialogue;
-
-  DialogueResponse({required this.npc, required this.dialogue});
-
-  factory DialogueResponse.fromJson(Map<String, dynamic> json) {
-    return DialogueResponse(npc: json['npc'], dialogue: json['dialogue']);
-  }
-}
-
-class DialogueApiResponse {
-  final List<DialogueResponse> responses;
-  final String state;
-
-  DialogueApiResponse({required this.responses, required this.state});
-
-  factory DialogueApiResponse.fromJson(Map<String, dynamic> json) {
-    return DialogueApiResponse(
-      responses:
-          (json['responses'] as List)
-              .map((response) => DialogueResponse.fromJson(response))
-              .toList(),
-      state: json['state'],
-    );
-  }
-}
+import 'package:loveloveraid/model/dialogue_api_response.dart';
 
 class GameApiService {
   final String baseUrl;

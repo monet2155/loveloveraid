@@ -101,10 +101,6 @@ class GameScreenController {
       for (var response in dialogueResponse.responses) {
         addDialogueQueue(response.npc, response.dialogue);
       }
-
-      if (dialogueResponse.state == "ended") {
-        addDialogueQueue(GameConstants.SYSTEM_CHARACTER, '대화가 종료되었습니다.');
-      }
     } catch (e) {
       _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
     } finally {

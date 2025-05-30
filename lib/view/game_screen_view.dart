@@ -227,20 +227,20 @@ class GameScreenView extends StatelessWidget {
           controller.appearedCharacters,
         );
 
-        if (appearedCharacters.length == 2 || appearedCharacters.length == 3) {
-          appearedCharacters.remove('이서아');
-          appearedCharacters.insert(1, '이서아');
-        }
-
-        final newlyAppearedCharacters =
-            controller.newlyAppearedCharacters.toList();
         final orderedRenderedCharacters =
             appearedCharacters.map((character) => character).toList();
-        orderedRenderedCharacters.sort((a, b) {
-          if (a == '이서아') return -1;
-          if (b == '이서아') return 1;
-          return a.compareTo(b);
-        });
+        // 이서아를 적절한 위치로 이동
+        if (orderedRenderedCharacters.contains('이서아')) {
+          orderedRenderedCharacters.remove('이서아');
+          // 다른 캐릭터가 있을 때만 2번째 위치로 이동
+          if (orderedRenderedCharacters.isNotEmpty) {
+            orderedRenderedCharacters.insert(1, '이서아');
+          } else {
+            orderedRenderedCharacters.add('이서아');
+          }
+        }
+        final newlyAppearedCharacters =
+            controller.newlyAppearedCharacters.toList();
         return Align(
           alignment: Alignment.bottomCenter,
           child: Stack(

@@ -80,7 +80,7 @@ class GameScreenController {
     _updateState(_state.copyWith(isDialoguePlaying: true, isLoading: true));
 
     try {
-      final dialogueList = await _apiService.sendDialogue(
+      final dialogueResponse = await _apiService.sendDialogue(
         _state.sessionId!,
         message,
       );
@@ -90,6 +90,7 @@ class GameScreenController {
         ..._state.dialogueHistory,
         DialogueLine(character: playerName, text: message),
       ];
+
       _updateState(
         _state.copyWith(
           dialogueHistory: newHistory,
@@ -97,26 +98,13 @@ class GameScreenController {
         ),
       );
 
-      for (var text in dialogueList) {
-        if (text == GameConstants.END_DIALOGUE_MARKER) {
-          addDialogueQueue(GameConstants.SYSTEM_CHARACTER, '대화가 종료되었습니다.');
-          break;
-        }
-
-        String character = text.split(':')[0];
-        String message = text.split(':')[1].trim();
-
-        if (message.contains('\n')) {
-          List<String> splitMessage = message.split('\n');
-          for (var i = 0; i < splitMessage.length; i++) {
-            addDialogueQueue(character, splitMessage[i]);
-          }
-        } else {
-          addDialogueQueue(character, message);
-        }
+      for (var response in dialogueResponse.responses) {
+        addDialogueQueue(response.npc, response.dialogue);
       }
-    } on NetworkException catch (e) {
-      _handleError(e);
+
+      if (dialogueResponse.state == "ended") {
+        addDialogueQueue(GameConstants.SYSTEM_CHARACTER, '대화가 종료되었습니다.');
+      }
     } catch (e) {
       _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
     } finally {
@@ -127,7 +115,6 @@ class GameScreenController {
   }
 
   void _playNextLine() {
-    print("play next");
     if (_state.dialogueQueue.isEmpty) {
       _updateState(
         _state.copyWith(isDialoguePlaying: false, isWaitingForTap: false),

@@ -28,7 +28,6 @@ class GameConstants {
   static const String PLAYER_ID = '1e4f9c78-8b6a-4a29-9c64-9e2d3cb3b6e1';
   static const String SYSTEM_CHARACTER = '시스템';
   static const String PLAYER_CHARACTER = '플레이어';
-  static const String END_DIALOGUE_MARKER = '**!!END!!**';
   static const String ERROR_PREFIX = '오류 발생: ';
 
   // 타이밍 관련 상수

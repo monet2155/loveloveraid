@@ -98,14 +98,17 @@ class _TitleScreenState extends State<TitleScreen> {
                             TextButton(
                               onPressed: () {
                                 Navigator.of(context).pop();
-                                _checkResources();
                               },
                               child: const Text('확인'),
                             ),
                           ]
                           : null,
                 ),
-          );
+          ).then((_) {
+            if (isBeforeDeadline) {
+              _checkResources();
+            }
+          });
         }
       }
     } catch (e) {

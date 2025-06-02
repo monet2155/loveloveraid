@@ -28,6 +28,7 @@ class GameScreenController {
   );
 
   String get currentCharacter => _state.currentLine?.character ?? '';
+  String get currentFace => _state.currentLine?.face ?? '001';
   String get visibleText => _state.visibleText;
   bool get canSendMessage =>
       !_state.isDialoguePlaying &&
@@ -94,7 +95,7 @@ class GameScreenController {
       // 대화 히스토리에 플레이어 메시지 추가
       final newHistory = [
         ..._state.dialogueHistory,
-        DialogueLine(character: playerName, text: message),
+        DialogueLine(character: playerName, text: message, face: ''),
       ];
 
       _updateState(
@@ -105,7 +106,7 @@ class GameScreenController {
       );
 
       for (var response in dialogueResponse.responses) {
-        addDialogueQueue(response.character, response.text);
+        addDialogueQueue(response.character, response.text, response.face);
       }
     } catch (e) {
       _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
@@ -318,7 +319,7 @@ class GameScreenController {
           character = GameConstants.SYSTEM_CHARACTER;
         }
 
-        addDialogueQueue(character, text);
+        addDialogueQueue(character, text, '');
       }
       _playNextLine();
     } on NetworkException catch (e) {
@@ -330,11 +331,15 @@ class GameScreenController {
     }
   }
 
-  void addDialogueQueue(String character, String text) {
+  void addDialogueQueue(String character, String text, String face) {
     String currentMessage = text.replaceAll("player", playerName);
     final newQueue = [
       ..._state.dialogueQueue,
-      DialogueLine(character: character, text: currentMessage),
+      DialogueLine(
+        character: character,
+        text: currentMessage,
+        face: face == '' ? '001' : face,
+      ),
     ];
     _updateState(_state.copyWith(dialogueQueue: newQueue));
   }
@@ -343,6 +348,7 @@ class GameScreenController {
     addDialogueQueue(
       GameConstants.SYSTEM_CHARACTER,
       '${GameConstants.ERROR_PREFIX}$error',
+      '',
     );
   }
 

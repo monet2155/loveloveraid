@@ -76,6 +76,7 @@ class GameApiService {
 
     if (response.statusCode == 200) {
       final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+      print(decodedBody);
       final Map<String, dynamic> data = decodedBody;
       if (data["dialogue"] == null) {
         throw NetworkException('서버에서 대화 내용을 가져오지 못했습니다.');

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 
 class EndScreen extends StatelessWidget {
-  const EndScreen({Key? key}) : super(key: key);
+  const EndScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

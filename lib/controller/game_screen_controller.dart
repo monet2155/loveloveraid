@@ -46,6 +46,7 @@ class GameScreenController {
           (_state.currentHistoryIndex < _state.dialogueHistory.length - 1));
   bool get isInHistoryView => _state.isInHistoryView;
   bool get isUIVisible => _state.isUIVisible;
+  bool get isHistoryPopupView => _state.isHistoryPopupView;
 
   GameScreenController({
     required this.playerName,
@@ -195,6 +196,9 @@ class GameScreenController {
   }
 
   void goToPreviousMessage() {
+    // 로딩중에 이벤트 처리 return
+    if (_state.isLoading) return;
+
     if (!canGoToPreviousMessage) return;
 
     _updateState(
@@ -207,6 +211,9 @@ class GameScreenController {
   }
 
   void goToNextMessage() {
+    // 로딩중에 이벤트 처리 return
+    if (_state.isLoading) return;
+
     if (canGoToNextMessage) {
       _updateState(
         _state.copyWith(currentHistoryIndex: _state.currentHistoryIndex + 1),
@@ -269,9 +276,6 @@ class GameScreenController {
   }
 
   void handleKeyEvent(KeyEvent event) {
-    // 로딩중에 키보드 이벤트 처리 return
-    if (_state.isLoading) return;
-
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
         if (canSendMessage) {
@@ -288,6 +292,11 @@ class GameScreenController {
       } else if (event.logicalKey == LogicalKeyboardKey.keyV &&
           HardwareKeyboard.instance.isControlPressed) {
         toggleUI();
+      } else if (event.logicalKey == LogicalKeyboardKey.keyH) {
+        _updateState(
+          _state.copyWith(isHistoryPopupView: !_state.isHistoryPopupView),
+        );
+        if (isHistoryPopupView) {}
       }
     }
   }

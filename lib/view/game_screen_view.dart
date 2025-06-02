@@ -245,63 +245,125 @@ class GameScreenView extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Stack(
             alignment: Alignment.bottomCenter,
-            children:
-                orderedRenderedCharacters.map((character) {
-                  final index = orderedRenderedCharacters.indexOf(character);
-                  final total = orderedRenderedCharacters.length;
-                  final padding = constraints.maxWidth / total;
-                  final offsetX = (index - (total - 1) / 2) * padding;
-                  final isNew = newlyAppearedCharacters.contains(character);
+            children: [
+              if (orderedRenderedCharacters.contains('이서아')) ...[
+                Builder(
+                  builder: (context) {
+                    final character = '이서아';
+                    final index = orderedRenderedCharacters.indexOf(character);
+                    final total = orderedRenderedCharacters.length;
+                    final padding = constraints.maxWidth / total;
+                    final offsetX = (index - (total - 1) / 2) * padding;
+                    final isNew = newlyAppearedCharacters.contains(character);
 
-                  final characterId =
-                      ResourceManager().characterResources
-                          .firstWhere((element) => element.name == character)
-                          .id;
-                  final characterImage =
-                      ResourceManager()
-                          .imageCache['${characterId}_001.png']!; //TODO: 자세별 이미지
+                    final characterId =
+                        ResourceManager().characterResources
+                            .firstWhere((element) => element.name == character)
+                            .id;
+                    final characterImage =
+                        ResourceManager().imageCache['${characterId}_001.png']!;
 
-                  final baseContent = Transform.translate(
-                    offset: Offset(offsetX, 0),
-                    child: Transform.scale(
-                      scale: 3.0,
-                      child: SizedBox(
-                        key: ValueKey('char_$character'),
-                        width: 450,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 0.5,
-                          child: Image.memory(
-                            characterImage,
-                            fit: BoxFit.contain,
+                    final baseContent = Transform.translate(
+                      offset: Offset(offsetX, 0),
+                      child: Transform.scale(
+                        scale: 3.0,
+                        child: SizedBox(
+                          key: ValueKey('char_$character'),
+                          width: 450,
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            heightFactor: 0.5,
+                            child: Image.memory(
+                              characterImage,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-
-                  if (isNew) {
-                    return TweenAnimationBuilder<double>(
-                      key: ValueKey('anim_$character'),
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOut,
-                      onEnd:
-                          () => controller.markCharacterAsAnimated(character),
-                      builder: (context, value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: Transform.translate(
-                            offset: Offset(0, 50 * (1 - value)),
-                            child: baseContent,
-                          ),
-                        );
-                      },
                     );
-                  } else {
-                    return baseContent;
-                  }
-                }).toList(),
+
+                    if (isNew) {
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('anim_$character'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        onEnd:
+                            () => controller.markCharacterAsAnimated(character),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 50 * (1 - value)),
+                              child: baseContent,
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return baseContent;
+                    }
+                  },
+                ),
+              ],
+              ...orderedRenderedCharacters
+                  .where((character) => character != '이서아')
+                  .map((character) {
+                    final index = orderedRenderedCharacters.indexOf(character);
+                    final total = orderedRenderedCharacters.length;
+                    final padding = constraints.maxWidth / total;
+                    final offsetX = (index - (total - 1) / 2) * padding;
+                    final isNew = newlyAppearedCharacters.contains(character);
+
+                    final characterId =
+                        ResourceManager().characterResources
+                            .firstWhere((element) => element.name == character)
+                            .id;
+                    final characterImage =
+                        ResourceManager().imageCache['${characterId}_001.png']!;
+
+                    final baseContent = Transform.translate(
+                      offset: Offset(offsetX, 0),
+                      child: Transform.scale(
+                        scale: 3.0,
+                        child: SizedBox(
+                          key: ValueKey('char_$character'),
+                          width: 450,
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            heightFactor: 0.5,
+                            child: Image.memory(
+                              characterImage,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+
+                    if (isNew) {
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('anim_$character'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        onEnd:
+                            () => controller.markCharacterAsAnimated(character),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 50 * (1 - value)),
+                              child: baseContent,
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return baseContent;
+                    }
+                  }),
+            ],
           ),
         );
       },

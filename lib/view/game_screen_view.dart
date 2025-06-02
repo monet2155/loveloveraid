@@ -4,7 +4,7 @@ import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 
-const double boxHorizontalMargin = 24;
+const double boxHorizontalMargin = 16;
 
 class GameScreenView extends StatelessWidget {
   final GameScreenController controller;

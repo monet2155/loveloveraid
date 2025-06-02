@@ -43,6 +43,7 @@ class GameScreenView extends StatelessWidget {
             children: [
               _buildBackground(),
               _buildCharacterImages(),
+              _buildHistoryPopup(),
               if (controller.isUIVisible) ...[
                 _buildDialogAndInput(),
                 if (controller.isInHistoryView) _buildHistoryIndicator(),
@@ -207,6 +208,17 @@ class GameScreenView extends StatelessWidget {
           '히스토리 모드',
           style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryPopup() {
+    return Positioned(
+      top: 20,
+      right: 20,
+      child: IconButton(
+        icon: Icon(Icons.article, color: Colors.white),
+        onPressed: null,
       ),
     );
   }

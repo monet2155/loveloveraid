@@ -14,6 +14,7 @@ class GameScreenState {
   final int currentHistoryIndex;
   final bool isInHistoryView;
   final bool isUIVisible;
+  final bool isHistoryPopupView;
 
   GameScreenState({
     this.dialogueQueue = const [],
@@ -29,6 +30,7 @@ class GameScreenState {
     this.currentHistoryIndex = -1,
     this.isInHistoryView = false,
     this.isUIVisible = true,
+    this.isHistoryPopupView = false,
   });
 
   GameScreenState copyWith({
@@ -45,6 +47,7 @@ class GameScreenState {
     int? currentHistoryIndex,
     bool? isInHistoryView,
     bool? isUIVisible,
+    bool? isHistoryPopupView,
   }) {
     return GameScreenState(
       dialogueQueue: dialogueQueue ?? this.dialogueQueue,

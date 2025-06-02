@@ -28,8 +28,14 @@ class GameScreenController {
   );
 
   String get currentCharacter => _state.currentLine?.character ?? '';
-  String get currentFace => _state.currentLine?.face ?? '001';
+  String get currentFace {
+    if (_state.currentLine == null) return '001';
+    final character = _state.currentLine!.character;
+    return _state.characterFaces[character] ?? '001';
+  }
+
   String get visibleText => _state.visibleText;
+  Map<String, String> get characterFaces => _state.characterFaces;
   bool get canSendMessage =>
       !_state.isDialoguePlaying &&
       _state.dialogueQueue.isEmpty &&
@@ -133,6 +139,12 @@ class GameScreenController {
     final newQueue = List<DialogueLine>.from(_state.dialogueQueue)..removeAt(0);
     final fullText = currentLine.text;
 
+    // 캐릭터의 표정 업데이트
+    final newCharacterFaces = Map<String, String>.from(_state.characterFaces);
+    if (currentLine.face.isNotEmpty) {
+      newCharacterFaces[currentLine.character] = currentLine.face;
+    }
+
     // 대화 히스토리에 현재 라인 추가
     final newHistory = [..._state.dialogueHistory, currentLine];
     _updateState(
@@ -142,6 +154,7 @@ class GameScreenController {
         visibleText: '',
         dialogueHistory: newHistory,
         currentHistoryIndex: newHistory.length - 1,
+        characterFaces: newCharacterFaces,
       ),
     );
 

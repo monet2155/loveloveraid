@@ -245,10 +245,12 @@ class GameScreenView extends StatelessWidget {
                             .firstWhere((element) => element.name == character)
                             .id;
 
-                    print('${characterId}_${controller.currentFace}.png');
+                    final currentFace =
+                        controller.characterFaces[character] ?? '001';
+                    final imageKey = '${characterId}_$currentFace.png';
                     final characterImage =
-                        ResourceManager()
-                            .imageCache['${characterId}_${controller.currentFace}.png']!;
+                        ResourceManager().imageCache[imageKey] ??
+                        ResourceManager().imageCache['${characterId}_001.png']!;
 
                     final baseContent = Transform.translate(
                       offset: Offset(offsetX, 0),
@@ -306,7 +308,11 @@ class GameScreenView extends StatelessWidget {
                         ResourceManager().characterResources
                             .firstWhere((element) => element.name == character)
                             .id;
+                    final currentFace =
+                        controller.characterFaces[character] ?? '001';
+                    final imageKey = '${characterId}_$currentFace.png';
                     final characterImage =
+                        ResourceManager().imageCache[imageKey] ??
                         ResourceManager().imageCache['${characterId}_001.png']!;
 
                     final baseContent = Transform.translate(

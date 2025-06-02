@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
-import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 
-final alignments = [
-  Alignment.bottomCenter,
-  Alignment.bottomLeft,
-  Alignment.bottomRight,
-];
+const double boxHorizontalMargin = 24;
 
 class GameScreenView extends StatelessWidget {
   final GameScreenController controller;
@@ -382,48 +377,83 @@ class GameScreenView extends StatelessWidget {
   }
 
   Widget _buildDialogBox() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
-        borderRadius: const BorderRadius.all(Radius.circular(16)),
-      ),
-      child: Stack(
-        children: [
-          SizedBox(
-            height: 120,
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                controller.isLoading
-                    ? Container()
-                    : Text(
-                      controller.currentCharacter,
-                      style: TextStyle(
-                        color: _getCharacterColor(controller.currentCharacter),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                controller.isLoading ? Container() : SizedBox(height: 8),
-                controller.isLoading
-                    ? _buildThreeDotsAnimation()
-                    : Text(
-                      controller.visibleText,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-              ],
+    String currentCharacter = controller.currentCharacter;
+    if (currentCharacter == '이서아') {
+      currentCharacter = "서아";
+    } else if (currentCharacter == '윤하린') {
+      currentCharacter = "하린";
+    } else if (currentCharacter == '강지연') {
+      currentCharacter = "지연";
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: boxHorizontalMargin),
+          padding: const EdgeInsets.fromLTRB(24, 40, 16, 16),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.7),
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+          ),
+          child: Stack(
+            children: [
+              SizedBox(
+                height: 140,
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 16),
+                    controller.isLoading
+                        ? _buildThreeDotsAnimation()
+                        : Text(
+                          controller.visibleText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+              (controller.isLoading ||
+                      (!controller.canSendMessage &&
+                          !controller.isInHistoryView))
+                  ? Container()
+                  : _buildHistoryButtonMenu(),
+            ],
+          ),
+        ),
+        if (!controller.isLoading)
+          Positioned(
+            top: -25,
+            left: boxHorizontalMargin + 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 8),
+              decoration: BoxDecoration(
+                color: _getCharacterColor(controller.currentCharacter),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                currentCharacter,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
-          (controller.isLoading ||
-                  (!controller.canSendMessage && !controller.isInHistoryView))
-              ? Container()
-              : _buildHistoryButtonMenu(),
-        ],
-      ),
+      ],
     );
   }
 
@@ -533,7 +563,7 @@ class GameScreenView extends StatelessWidget {
       case '이서아':
         return const Color(0xFFFFA500);
       default:
-        return Colors.white70;
+        return Colors.grey;
     }
   }
 }

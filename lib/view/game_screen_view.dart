@@ -402,8 +402,8 @@ class GameScreenView extends StatelessWidget {
                     ? Container()
                     : Text(
                       controller.currentCharacter,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: _getCharacterColor(controller.currentCharacter),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -522,5 +522,18 @@ class GameScreenView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getCharacterColor(String characterName) {
+    switch (characterName) {
+      case '강지연':
+        return const Color(0xFF3399FF);
+      case '윤하린':
+        return const Color(0xFF50C878);
+      case '이서아':
+        return const Color(0xFFFFA500);
+      default:
+        return Colors.white70;
+    }
   }
 }

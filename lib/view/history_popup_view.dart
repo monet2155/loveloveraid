@@ -1,58 +1,141 @@
 import 'package:flutter/material.dart';
+import 'package:loveloveraid/model/dialogue_line.dart';
 
 class HistoryPopupView extends StatelessWidget {
-  final List<String> logs;
+  final List<DialogueLine> logs;
+  final VoidCallback onClose;
 
-  const HistoryPopupView({required this.logs});
+  const HistoryPopupView({
+    super.key,
+    required this.logs,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
-      child: Material(
-        color: Colors.black.withOpacity(0.7),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                reverse: true,
-                padding: const EdgeInsets.all(16),
-                itemCount: logs.length,
-                itemBuilder: (context, index) {
-                  final log = logs[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          // TextSpan(
-                          //   text: '${log.speaker}\n',
-                          //   style: const TextStyle(
-                          //     fontWeight: FontWeight.bold,
-                          //     fontSize: 18,
-                          //     color: Colors.white,
-                          //   ),
-                          // ),
-                          // TextSpan(
-                          //   text: log.text,
-                          //   style: const TextStyle(
-                          //     color: Colors.white70,
-                          //     fontSize: 16,
-                          //   ),
-                          // ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+      child: GestureDetector(
+        onTap: onClose,
+        child: Material(
+          color: Colors.black.withOpacity(0.7),
+          child: Column(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {}, // 내부 ListView 터치 시 팝업 닫히는걸 방지
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: logs.length,
+                    itemBuilder: (context, index) {
+                      final log = logs[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '${log.character}\n',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              TextSpan(
+                                text: log.text,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('닫기'),
-            ),
-          ],
+              ElevatedButton(onPressed: onClose, child: const Text('닫기')),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+
+// 작은 화면 버전
+// class HistoryPopupView extends StatelessWidget {
+//   final List<DialogueLine> logs;
+//   final VoidCallback onClose;
+
+//   const HistoryPopupView({
+//     super.key,
+//     required this.logs,
+//     required this.onClose,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: onClose,
+//       child: Container(
+//         color: Colors.black.withOpacity(0.7),
+//         child: Center(
+//           child: GestureDetector(
+//             onTap: () {}, // 내부 터치 무시 (닫힘 방지)
+//             child: Container(
+//               width: MediaQuery.of(context).size.width * 0.8,
+//               height: MediaQuery.of(context).size.height * 0.6,
+//               padding: const EdgeInsets.all(16),
+//               decoration: BoxDecoration(
+//                 color: Colors.grey[900],
+//                 borderRadius: BorderRadius.circular(12),
+//               ),
+//               child: Column(
+//                 children: [
+//                   Expanded(
+//                     child: ListView.builder(
+//                       itemCount: logs.length,
+//                       itemBuilder: (context, index) {
+//                         final log = logs[index];
+//                         return Padding(
+//                           padding: const EdgeInsets.only(bottom: 12),
+//                           child: RichText(
+//                             text: TextSpan(
+//                               children: [
+//                                 TextSpan(
+//                                   text: '${log.character}\n',
+//                                   style: const TextStyle(
+//                                     fontWeight: FontWeight.bold,
+//                                     fontSize: 18,
+//                                     color: Colors.white,
+//                                   ),
+//                                 ),
+//                                 TextSpan(
+//                                   text: log.text,
+//                                   style: const TextStyle(
+//                                     color: Colors.white70,
+//                                     fontSize: 16,
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+//                         );
+//                       },
+//                     ),
+//                   ),
+//                   ElevatedButton(onPressed: onClose, child: const Text('닫기')),
+//                 ],
+//               ),
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+

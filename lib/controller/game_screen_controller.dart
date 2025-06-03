@@ -10,6 +10,7 @@ import 'package:loveloveraid/exceptions/game_exception.dart';
 import 'package:loveloveraid/services/game_api_service.dart';
 import 'package:loveloveraid/services/tts_service.dart' as tts;
 import 'package:loveloveraid/model/game_screen_state.dart';
+import 'package:loveloveraid/view/history_popup_view.dart';
 
 class GameScreenController {
   final String playerName;
@@ -47,6 +48,7 @@ class GameScreenController {
   bool get isInHistoryView => _state.isInHistoryView;
   bool get isUIVisible => _state.isUIVisible;
   bool get isHistoryPopupView => _state.isHistoryPopupView;
+  List<DialogueLine> get dialogueHistory => _state.dialogueHistory;
 
   GameScreenController({
     required this.playerName,
@@ -248,6 +250,17 @@ class GameScreenController {
     );
   }
 
+  void showHistoryPopup() {
+    if (_state.isLoading) return;
+
+    //히스토리 팝업 이벤트 처리
+    _updateState(
+      _state.copyWith(isHistoryPopupView: !_state.isHistoryPopupView),
+    );
+
+    print("showHistoryPopup");
+  }
+
   void skipOrNext() {
     if (_state.isInHistoryView) {
       goToNextMessage();
@@ -292,11 +305,10 @@ class GameScreenController {
       } else if (event.logicalKey == LogicalKeyboardKey.keyV &&
           HardwareKeyboard.instance.isControlPressed) {
         toggleUI();
-      } else if (event.logicalKey == LogicalKeyboardKey.keyH) {
-        _updateState(
-          _state.copyWith(isHistoryPopupView: !_state.isHistoryPopupView),
-        );
-        if (isHistoryPopupView) {}
+      }
+
+      if (event.logicalKey == LogicalKeyboardKey.altLeft) {
+        showHistoryPopup();
       }
     }
   }

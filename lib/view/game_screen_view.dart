@@ -3,6 +3,7 @@ import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
+import 'package:loveloveraid/view/history_popup_view.dart';
 
 final alignments = [
   Alignment.bottomCenter,
@@ -17,6 +18,7 @@ class GameScreenView extends StatelessWidget {
   final FocusNode textFieldFocusNode;
   final VoidCallback onSend;
   final Function(KeyEvent) onKeyEvent;
+  static bool _alreadyOpenedPopup = false;
 
   const GameScreenView({
     super.key,
@@ -30,6 +32,33 @@ class GameScreenView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 전체 히스토리
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.isHistoryPopupView && !_alreadyOpenedPopup) {
+        _alreadyOpenedPopup = true;
+        showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder:
+              (context) => HistoryPopupView(
+                logs: controller.dialogueHistory,
+                onClose: () {
+                  Navigator.of(context).pop();
+                  controller.showHistoryPopup(); // 상태 false로 토글
+                  _alreadyOpenedPopup = false;
+                },
+              ),
+        ).then((_) {
+          // 다이얼로그가 닫히면 플래그 초기화
+          _alreadyOpenedPopup = false;
+          if (controller.isHistoryPopupView) {
+            controller.showHistoryPopup(); // 상태 false로 맞추기
+          }
+        });
+      }
+    });
+
     return KeyboardListener(
       focusNode: keyboardFocusNode,
       onKeyEvent: onKeyEvent,
@@ -43,7 +72,6 @@ class GameScreenView extends StatelessWidget {
             children: [
               _buildBackground(),
               _buildCharacterImages(),
-              _buildHistoryPopup(),
               if (controller.isUIVisible) ...[
                 _buildDialogAndInput(),
                 if (controller.isInHistoryView) _buildHistoryIndicator(),
@@ -89,6 +117,13 @@ class GameScreenView extends StatelessWidget {
                               value: 'load',
                               child: Text(
                                 '불러오기',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ),
+                            const PopupMenuItem<String>(
+                              value: 'historyPopup',
+                              child: Text(
+                                '전체 히스토리 보기',
                                 style: TextStyle(color: Colors.white70),
                               ),
                             ),
@@ -157,6 +192,11 @@ class GameScreenView extends StatelessWidget {
                                         "'Ctrl + V' 키 : UI 숨기기/숨기기 해제",
                                         style: TextStyle(color: Colors.white70),
                                       ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        "'Ctrl + H' 키 : 전체 히스토리 보기",
+                                        style: TextStyle(color: Colors.white70),
+                                      ),
                                     ],
                                   ),
                                   actions: [
@@ -180,6 +220,28 @@ class GameScreenView extends StatelessWidget {
                               ),
                               (route) => false,
                             );
+                            break;
+                          case 'historyPopup':
+                            controller.showHistoryPopup();
+                            // if (controller.isHistoryPopupView) {
+                            //   Future.microtask(() {
+                            //     showDialog(
+                            //       context: context,
+                            //       barrierDismissible: true,
+                            //       builder:
+                            //           (context) => HistoryPopupView(
+                            //             logs: controller.dialogueHistory,
+                            //             onClose: () {
+                            //               Navigator.of(
+                            //                 context,
+                            //               ).pop(); // 다이얼로그 닫기
+                            //               controller
+                            //                   .showHistoryPopup(); // 상태 변경
+                            //             },
+                            //           ),
+                            //     );
+                            //   });
+                            // }
                             break;
                         }
                       },
@@ -208,17 +270,6 @@ class GameScreenView extends StatelessWidget {
           '히스토리 모드',
           style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHistoryPopup() {
-    return Positioned(
-      top: 20,
-      right: 20,
-      child: IconButton(
-        icon: Icon(Icons.article, color: Colors.white),
-        onPressed: null,
       ),
     );
   }
@@ -257,63 +308,125 @@ class GameScreenView extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           child: Stack(
             alignment: Alignment.bottomCenter,
-            children:
-                orderedRenderedCharacters.map((character) {
-                  final index = orderedRenderedCharacters.indexOf(character);
-                  final total = orderedRenderedCharacters.length;
-                  final padding = constraints.maxWidth / total;
-                  final offsetX = (index - (total - 1) / 2) * padding;
-                  final isNew = newlyAppearedCharacters.contains(character);
+            children: [
+              if (orderedRenderedCharacters.contains('이서아')) ...[
+                Builder(
+                  builder: (context) {
+                    final character = '이서아';
+                    final index = orderedRenderedCharacters.indexOf(character);
+                    final total = orderedRenderedCharacters.length;
+                    final padding = constraints.maxWidth / total;
+                    final offsetX = (index - (total - 1) / 2) * padding;
+                    final isNew = newlyAppearedCharacters.contains(character);
 
-                  final characterId =
-                      ResourceManager().characterResources
-                          .firstWhere((element) => element.name == character)
-                          .id;
-                  final characterImage =
-                      ResourceManager()
-                          .imageCache['${characterId}_001.png']!; //TODO: 자세별 이미지
+                    final characterId =
+                        ResourceManager().characterResources
+                            .firstWhere((element) => element.name == character)
+                            .id;
+                    final characterImage =
+                        ResourceManager().imageCache['${characterId}_001.png']!;
 
-                  final baseContent = Transform.translate(
-                    offset: Offset(offsetX, 0),
-                    child: Transform.scale(
-                      scale: 3.0,
-                      child: SizedBox(
-                        key: ValueKey('char_$character'),
-                        width: 450,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 0.5,
-                          child: Image.memory(
-                            characterImage,
-                            fit: BoxFit.contain,
+                    final baseContent = Transform.translate(
+                      offset: Offset(offsetX, 0),
+                      child: Transform.scale(
+                        scale: 3.0,
+                        child: SizedBox(
+                          key: ValueKey('char_$character'),
+                          width: 450,
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            heightFactor: 0.5,
+                            child: Image.memory(
+                              characterImage,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-
-                  if (isNew) {
-                    return TweenAnimationBuilder<double>(
-                      key: ValueKey('anim_$character'),
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOut,
-                      onEnd:
-                          () => controller.markCharacterAsAnimated(character),
-                      builder: (context, value, child) {
-                        return Opacity(
-                          opacity: value,
-                          child: Transform.translate(
-                            offset: Offset(0, 50 * (1 - value)),
-                            child: baseContent,
-                          ),
-                        );
-                      },
                     );
-                  } else {
-                    return baseContent;
-                  }
-                }).toList(),
+
+                    if (isNew) {
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('anim_$character'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        onEnd:
+                            () => controller.markCharacterAsAnimated(character),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 50 * (1 - value)),
+                              child: baseContent,
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return baseContent;
+                    }
+                  },
+                ),
+              ],
+              ...orderedRenderedCharacters
+                  .where((character) => character != '이서아')
+                  .map((character) {
+                    final index = orderedRenderedCharacters.indexOf(character);
+                    final total = orderedRenderedCharacters.length;
+                    final padding = constraints.maxWidth / total;
+                    final offsetX = (index - (total - 1) / 2) * padding;
+                    final isNew = newlyAppearedCharacters.contains(character);
+
+                    final characterId =
+                        ResourceManager().characterResources
+                            .firstWhere((element) => element.name == character)
+                            .id;
+                    final characterImage =
+                        ResourceManager().imageCache['${characterId}_001.png']!;
+
+                    final baseContent = Transform.translate(
+                      offset: Offset(offsetX, 0),
+                      child: Transform.scale(
+                        scale: 3.0,
+                        child: SizedBox(
+                          key: ValueKey('char_$character'),
+                          width: 450,
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            heightFactor: 0.5,
+                            child: Image.memory(
+                              characterImage,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+
+                    if (isNew) {
+                      return TweenAnimationBuilder<double>(
+                        key: ValueKey('anim_$character'),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        onEnd:
+                            () => controller.markCharacterAsAnimated(character),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 50 * (1 - value)),
+                              child: baseContent,
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return baseContent;
+                    }
+                  }),
+            ],
           ),
         );
       },

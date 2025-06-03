@@ -307,7 +307,8 @@ class GameScreenController {
         toggleUI();
       }
 
-      if (event.logicalKey == LogicalKeyboardKey.altLeft) {
+      if (event.logicalKey == LogicalKeyboardKey.keyH &&
+          HardwareKeyboard.instance.isControlPressed) {
         showHistoryPopup();
       }
     }

@@ -60,59 +60,9 @@ class _TitleScreenState extends State<TitleScreen> {
         }
         return;
       }
-      await _checkDemoPeriod();
+      _checkResources();
     } catch (e) {
       print('인터넷 연결 확인 중 오류 발생: $e');
-    }
-  }
-
-  Future<void> _checkDemoPeriod() async {
-    try {
-      final demoCheckUrl = dotenv.env['DEMO_CHECK_API_URL'];
-      if (demoCheckUrl == null) {
-        print('DEMO_CHECK_API_URL이 설정되지 않았습니다.');
-        return;
-      }
-
-      final response = await http.get(Uri.parse(demoCheckUrl));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final isBeforeDeadline = data['isBeforeDeadline'] as bool;
-        final deadline = DateTime.parse(data['deadline'] as String);
-
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: isBeforeDeadline,
-            builder:
-                (context) => AlertDialog(
-                  title: Text(isBeforeDeadline ? '데모 체험 안내' : '데모 종료 안내'),
-                  content: Text(
-                    isBeforeDeadline
-                        ? '데모에 참여해주셔서 감사합니다! 데모 체험 기간은 ${deadline.toString().split('.')[0]} 까지입니다.\n즐거운 플레이 되세요!'
-                        : '데모 체험 기간이 종료되었습니다. 정식 출시를 기다려주세요!',
-                  ),
-                  actions:
-                      isBeforeDeadline
-                          ? [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('확인'),
-                            ),
-                          ]
-                          : null,
-                ),
-          ).then((_) {
-            if (isBeforeDeadline) {
-              _checkResources();
-            }
-          });
-        }
-      }
-    } catch (e) {
-      print('데모 기간 확인 중 오류 발생: $e');
     }
   }
 

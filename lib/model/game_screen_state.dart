@@ -63,6 +63,7 @@ class GameScreenState {
       currentHistoryIndex: currentHistoryIndex ?? this.currentHistoryIndex,
       isInHistoryView: isInHistoryView ?? this.isInHistoryView,
       isUIVisible: isUIVisible ?? this.isUIVisible,
+      isHistoryPopupView: isHistoryPopupView ?? this.isHistoryPopupView,
     );
   }
 }

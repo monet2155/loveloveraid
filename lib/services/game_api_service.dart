@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/constants/game_constants.dart';
 import 'package:loveloveraid/exceptions/game_exception.dart';
 import 'package:loveloveraid/model/step.dart';
+import 'package:loveloveraid/model/dialogue_api_response.dart';
 
 class GameApiService {
   final String baseUrl;
@@ -61,10 +62,13 @@ class GameApiService {
     }
   }
 
-  Future<List<String>> sendDialogue(String sessionId, String message) async {
+  Future<DialogueApiResponse> sendDialogue(
+    String sessionId,
+    String message,
+  ) async {
     final response = await http.post(
       Uri.parse(
-        '$baseUrl/npc/$sessionId/dialogue${provider != null ? "?provider=$provider" : ""}',
+        '$baseUrl/npc/$sessionId/dialogue${provider != null ? "?provider=$provider" : ""}&response_format=json',
       ),
       headers: GameConstants.JSON_HEADERS,
       body: jsonEncode({'player_input': message}),
@@ -72,12 +76,12 @@ class GameApiService {
 
     if (response.statusCode == 200) {
       final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+      print(decodedBody);
       final Map<String, dynamic> data = decodedBody;
-      if (data['dialogue'] == null) {
+      if (data["dialogue"] == null) {
         throw NetworkException('서버에서 대화 내용을 가져오지 못했습니다.');
       }
-
-      return data['dialogue'].split("\n\n");
+      return DialogueApiResponse.fromJson(jsonDecode(data["dialogue"]));
     } else {
       throw NetworkException(
         '서버와의 통신 중 오류가 발생했습니다.',

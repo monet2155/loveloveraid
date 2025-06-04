@@ -29,7 +29,14 @@ class GameScreenController {
   );
 
   String get currentCharacter => _state.currentLine?.character ?? '';
+  String get currentFace {
+    if (_state.currentLine == null) return '001';
+    final character = _state.currentLine!.character;
+    return _state.characterFaces[character] ?? '001';
+  }
+
   String get visibleText => _state.visibleText;
+  Map<String, String> get characterFaces => _state.characterFaces;
   bool get canSendMessage =>
       !_state.isDialoguePlaying &&
       _state.dialogueQueue.isEmpty &&
@@ -49,6 +56,8 @@ class GameScreenController {
   bool get isUIVisible => _state.isUIVisible;
   bool get isHistoryPopupView => _state.isHistoryPopupView;
   List<DialogueLine> get dialogueHistory => _state.dialogueHistory;
+
+  bool isEnd = false;
 
   GameScreenController({
     required this.playerName,
@@ -83,16 +92,21 @@ class GameScreenController {
     _updateState(_state.copyWith(isDialoguePlaying: true, isLoading: true));
 
     try {
-      final dialogueList = await _apiService.sendDialogue(
+      final dialogueResponse = await _apiService.sendDialogue(
         _state.sessionId!,
         message,
       );
 
+      if (dialogueResponse.state == "ended") {
+        isEnd = true;
+      }
+
       // 대화 히스토리에 플레이어 메시지 추가
       final newHistory = [
         ..._state.dialogueHistory,
-        DialogueLine(character: playerName, text: message),
+        DialogueLine(character: playerName, text: message, face: ''),
       ];
+
       _updateState(
         _state.copyWith(
           dialogueHistory: newHistory,
@@ -100,26 +114,9 @@ class GameScreenController {
         ),
       );
 
-      for (var text in dialogueList) {
-        if (text == GameConstants.END_DIALOGUE_MARKER) {
-          addDialogueQueue(GameConstants.SYSTEM_CHARACTER, '대화가 종료되었습니다.');
-          break;
-        }
-
-        String character = text.split(':')[0];
-        String message = text.split(':')[1].trim();
-
-        if (message.contains('\n')) {
-          List<String> splitMessage = message.split('\n');
-          for (var i = 0; i < splitMessage.length; i++) {
-            addDialogueQueue(character, splitMessage[i]);
-          }
-        } else {
-          addDialogueQueue(character, message);
-        }
+      for (var response in dialogueResponse.responses) {
+        addDialogueQueue(response.character, response.text, response.face);
       }
-    } on NetworkException catch (e) {
-      _handleError(e);
     } catch (e) {
       _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
     } finally {
@@ -130,11 +127,14 @@ class GameScreenController {
   }
 
   void _playNextLine() {
-    print("play next");
     if (_state.dialogueQueue.isEmpty) {
       _updateState(
         _state.copyWith(isDialoguePlaying: false, isWaitingForTap: false),
       );
+      if (isEnd) {
+        onEndChapter();
+        return;
+      }
       return;
     }
 
@@ -142,9 +142,10 @@ class GameScreenController {
     final newQueue = List<DialogueLine>.from(_state.dialogueQueue)..removeAt(0);
     final fullText = currentLine.text;
 
-    if (fullText == "대화가 종료되었습니다.") {
-      onEndChapter();
-      return;
+    // 캐릭터의 표정 업데이트
+    final newCharacterFaces = Map<String, String>.from(_state.characterFaces);
+    if (currentLine.face.isNotEmpty) {
+      newCharacterFaces[currentLine.character] = currentLine.face;
     }
 
     // 대화 히스토리에 현재 라인 추가
@@ -156,6 +157,7 @@ class GameScreenController {
         visibleText: '',
         dialogueHistory: newHistory,
         currentHistoryIndex: newHistory.length - 1,
+        characterFaces: newCharacterFaces,
       ),
     );
 
@@ -289,6 +291,9 @@ class GameScreenController {
   }
 
   void handleKeyEvent(KeyEvent event) {
+    // 로딩중에 키보드 이벤트 처리 return
+    if (_state.isLoading) return;
+
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
         if (canSendMessage) {
@@ -355,7 +360,7 @@ class GameScreenController {
           character = GameConstants.SYSTEM_CHARACTER;
         }
 
-        addDialogueQueue(character, text);
+        addDialogueQueue(character, text, '');
       }
       _playNextLine();
     } on NetworkException catch (e) {
@@ -367,11 +372,15 @@ class GameScreenController {
     }
   }
 
-  void addDialogueQueue(String character, String text) {
+  void addDialogueQueue(String character, String text, String face) {
     String currentMessage = text.replaceAll("player", playerName);
     final newQueue = [
       ..._state.dialogueQueue,
-      DialogueLine(character: character, text: currentMessage),
+      DialogueLine(
+        character: character,
+        text: currentMessage,
+        face: face == '' ? '001' : face,
+      ),
     ];
     _updateState(_state.copyWith(dialogueQueue: newQueue));
   }
@@ -380,6 +389,7 @@ class GameScreenController {
     addDialogueQueue(
       GameConstants.SYSTEM_CHARACTER,
       '${GameConstants.ERROR_PREFIX}$error',
+      '',
     );
   }
 

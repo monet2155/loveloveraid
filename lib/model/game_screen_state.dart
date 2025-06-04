@@ -34,11 +34,8 @@ class GameScreenState {
     this.currentHistoryIndex = -1,
     this.isInHistoryView = false,
     this.isUIVisible = true,
-<<<<<<< HEAD
     this.isHistoryPopupView = false,
-=======
     this.characterFaces = const {},
->>>>>>> d1009472817351aae0d9adf8423a54818c3d279d
   });
 
   GameScreenState copyWith({
@@ -55,11 +52,8 @@ class GameScreenState {
     int? currentHistoryIndex,
     bool? isInHistoryView,
     bool? isUIVisible,
-<<<<<<< HEAD
     bool? isHistoryPopupView,
-=======
     Map<String, String>? characterFaces,
->>>>>>> d1009472817351aae0d9adf8423a54818c3d279d
   }) {
     return GameScreenState(
       sessionId: sessionId ?? this.sessionId,
@@ -75,11 +69,8 @@ class GameScreenState {
       currentHistoryIndex: currentHistoryIndex ?? this.currentHistoryIndex,
       isInHistoryView: isInHistoryView ?? this.isInHistoryView,
       isUIVisible: isUIVisible ?? this.isUIVisible,
-<<<<<<< HEAD
       isHistoryPopupView: isHistoryPopupView ?? this.isHistoryPopupView,
-=======
       characterFaces: characterFaces ?? this.characterFaces,
->>>>>>> d1009472817351aae0d9adf8423a54818c3d279d
     );
   }
 }

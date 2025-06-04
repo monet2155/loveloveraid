@@ -12,16 +12,13 @@ class GameException implements Exception {
 }
 
 class NetworkException extends GameException {
-  NetworkException(String message, {String? details, dynamic originalError})
-    : super(message, details: details, originalError: originalError);
+  NetworkException(super.message, {super.details, super.originalError});
 }
 
 class SessionException extends GameException {
-  SessionException(String message, {String? details, dynamic originalError})
-    : super(message, details: details, originalError: originalError);
+  SessionException(super.message, {super.details, super.originalError});
 }
 
 class TTSException extends GameException {
-  TTSException(String message, {String? details, dynamic originalError})
-    : super(message, details: details, originalError: originalError);
+  TTSException(super.message, {super.details, super.originalError});
 }

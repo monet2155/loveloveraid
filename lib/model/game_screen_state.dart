@@ -14,6 +14,7 @@ class GameScreenState {
   final int currentHistoryIndex;
   final bool isInHistoryView;
   final bool isUIVisible;
+  final bool isHistoryPopupView;
   final Map<String, String> characterFaces;
 
   GameScreenState({
@@ -30,6 +31,7 @@ class GameScreenState {
     this.currentHistoryIndex = -1,
     this.isInHistoryView = false,
     this.isUIVisible = true,
+    this.isHistoryPopupView = false,
     this.characterFaces = const {},
   });
 
@@ -47,6 +49,7 @@ class GameScreenState {
     int? currentHistoryIndex,
     bool? isInHistoryView,
     bool? isUIVisible,
+    bool? isHistoryPopupView,
     Map<String, String>? characterFaces,
   }) {
     return GameScreenState(
@@ -63,6 +66,7 @@ class GameScreenState {
       currentHistoryIndex: currentHistoryIndex ?? this.currentHistoryIndex,
       isInHistoryView: isInHistoryView ?? this.isInHistoryView,
       isUIVisible: isUIVisible ?? this.isUIVisible,
+      isHistoryPopupView: isHistoryPopupView ?? this.isHistoryPopupView,
       characterFaces: characterFaces ?? this.characterFaces,
     );
   }

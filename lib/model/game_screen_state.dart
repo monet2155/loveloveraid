@@ -14,11 +14,8 @@ class GameScreenState {
   final int currentHistoryIndex;
   final bool isInHistoryView;
   final bool isUIVisible;
-<<<<<<< HEAD
   final bool isHistoryPopupView;
-=======
   final Map<String, String> characterFaces;
->>>>>>> d1009472817351aae0d9adf8423a54818c3d279d
 
   GameScreenState({
     this.sessionId,

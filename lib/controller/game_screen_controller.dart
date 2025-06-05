@@ -39,7 +39,6 @@ class GameScreenController {
   Map<String, String> get characterFaces => _state.characterFaces;
   bool get canSendMessage =>
       !_state.isDialoguePlaying &&
-      _state.dialogueQueue.isEmpty &&
       !_state.isWaitingForTap &&
       !_state.isInHistoryView &&
       !_state.isLoading;
@@ -48,14 +47,19 @@ class GameScreenController {
   Set<String> get appearedCharacters => _state.appearedCharacters;
   Set<String> get newlyAppearedCharacters =>
       _state.appearedCharacters.difference(_state.animatedCharacters);
-  bool get canGoToPreviousMessage => _state.currentHistoryIndex > 0;
+  bool get canGoToPreviousMessage =>
+      _state.isInHistoryView
+          ? _state.currentHistoryIndex > 0
+          : _state.currentDialogueIndex > 0;
   bool get canGoToNextMessage =>
-      (_state.isInHistoryView &&
-          (_state.currentHistoryIndex < _state.dialogueHistory.length - 1));
+      _state.isInHistoryView
+          ? _state.currentHistoryIndex < _state.dialogues.length - 1
+          : _state.currentDialogueIndex < _state.dialogues.length - 1;
   bool get isInHistoryView => _state.isInHistoryView;
   bool get isUIVisible => _state.isUIVisible;
   bool get isHistoryPopupView => _state.isHistoryPopupView;
-  List<DialogueLine> get dialogueHistory => _state.dialogueHistory;
+  List<DialogueLine> get dialogueHistory => _state.dialogues;
+  int get currentDialogueIndex => _state.currentDialogueIndex;
 
   bool isEnd = false;
 
@@ -103,19 +107,21 @@ class GameScreenController {
 
       // 대화 히스토리에 플레이어 메시지 추가
       final newHistory = [
-        ..._state.dialogueHistory,
+        ..._state.dialogues,
         DialogueLine(character: playerName, text: message, face: ''),
       ];
 
       _updateState(
         _state.copyWith(
-          dialogueHistory: newHistory,
+          dialogues: newHistory,
+          currentDialogueIndex: newHistory.length - 1,
           currentHistoryIndex: newHistory.length - 1,
+          isInHistoryView: false,
         ),
       );
 
       for (var response in dialogueResponse.responses) {
-        addDialogueQueue(response.character, response.text, response.face);
+        addDialogue(response.character, response.text, response.face);
       }
     } catch (e) {
       _handleError(NetworkException('서버와의 통신 중 오류가 발생했습니다.', originalError: e));
@@ -127,51 +133,44 @@ class GameScreenController {
   }
 
   void _playNextLine() {
-    if (_state.dialogueQueue.isEmpty) {
+    if (_state.currentDialogueIndex + 1 >= _state.dialogues.length) {
       _updateState(
         _state.copyWith(isDialoguePlaying: false, isWaitingForTap: false),
       );
       if (isEnd) {
         onEndChapter();
-        return;
       }
       return;
     }
 
-    final currentLine = _state.dialogueQueue.first;
-    final newQueue = List<DialogueLine>.from(_state.dialogueQueue)..removeAt(0);
-    final fullText = currentLine.text;
+    final nextIndex = _state.currentDialogueIndex + 1;
+    final currentLine = _state.dialogues[nextIndex];
 
-    // 캐릭터의 표정 업데이트
+    // 캐릭터 표정 업데이트
     final newCharacterFaces = Map<String, String>.from(_state.characterFaces);
     if (currentLine.face.isNotEmpty) {
       newCharacterFaces[currentLine.character] = currentLine.face;
     }
 
-    // 대화 히스토리에 현재 라인 추가
-    final newHistory = [..._state.dialogueHistory, currentLine];
+    // 등장 캐릭터 집합 업데이트
+    final newAppeared = {..._state.appearedCharacters, currentLine.character};
+
     _updateState(
       _state.copyWith(
-        dialogueQueue: newQueue,
+        currentDialogueIndex: nextIndex,
         currentLine: currentLine,
         visibleText: '',
-        dialogueHistory: newHistory,
-        currentHistoryIndex: newHistory.length - 1,
+        isDialoguePlaying: true,
+        isWaitingForTap: false,
         characterFaces: newCharacterFaces,
+        appearedCharacters: newAppeared,
       ),
     );
 
     if (currentCharacter != '시스템') {
-      _updateState(
-        _state.copyWith(
-          appearedCharacters: {..._state.appearedCharacters, currentCharacter},
-        ),
-      );
       if (kDebugMode && GameConstants.USING_TTS) {
-        if (player.playing) {
-          player.stop();
-        }
-        playTTS(currentCharacter, fullText);
+        if (player.playing) player.stop();
+        playTTS(currentCharacter, currentLine.text);
       }
     }
 
@@ -179,16 +178,17 @@ class GameScreenController {
     _textTimer?.cancel();
     _textTimer = Timer.periodic(textSpeed, (timer) {
       _updateState(
-        _state.copyWith(visibleText: _state.visibleText + fullText[charIndex]),
+        _state.copyWith(
+          visibleText: _state.visibleText + currentLine.text[charIndex],
+        ),
       );
       charIndex++;
-      if (charIndex >= fullText.length) {
+      if (charIndex >= currentLine.text.length) {
         timer.cancel();
         _updateState(
           _state.copyWith(isWaitingForTap: true, isDialoguePlaying: false),
         );
-
-        if (_state.dialogueQueue.isEmpty) {
+        if (_state.currentDialogueIndex + 1 >= _state.dialogues.length) {
           Future.delayed(const Duration(milliseconds: 300), () {
             if (_state.isWaitingForTap) {
               skipOrNext();
@@ -203,45 +203,71 @@ class GameScreenController {
     // 로딩중에 이벤트 처리 return
     if (_state.isLoading) return;
 
-    if (!canGoToPreviousMessage) return;
+    if (_state.isInHistoryView) {
+      if (_state.currentHistoryIndex > 0) {
+        final prevIndex = _state.currentHistoryIndex - 1;
+        _updateState(_state.copyWith(currentHistoryIndex: prevIndex));
+        _showHistoryMessage(index: prevIndex);
+      }
+    } else {
+      // 처음 히스토리 진입 시, currentDialogueIndex를 기준으로 시작
+      final currentIndex = _state.currentDialogueIndex;
 
-    _updateState(
-      _state.copyWith(
-        isInHistoryView: true,
-        currentHistoryIndex: _state.currentHistoryIndex - 1,
-      ),
-    );
-    _showHistoryMessage();
+      if (currentIndex > 0) {
+        _updateState(
+          _state.copyWith(
+            isInHistoryView: true,
+            //
+            currentHistoryIndex: currentIndex - 1,
+          ),
+        );
+        _showHistoryMessage(index: currentIndex - 1);
+      }
+    }
   }
 
   void goToNextMessage() {
     // 로딩중에 이벤트 처리 return
     if (_state.isLoading) return;
 
-    if (canGoToNextMessage) {
-      _updateState(
-        _state.copyWith(currentHistoryIndex: _state.currentHistoryIndex + 1),
-      );
-      _showHistoryMessage();
+    if (_state.isInHistoryView) {
+      final current = _state.currentHistoryIndex;
+      final target = _state.currentDialogueIndex;
 
-      if (_state.currentHistoryIndex >= _state.dialogueHistory.length - 1) {
-        _updateState(_state.copyWith(isInHistoryView: false));
-        skipOrNext();
+      if (current < target) {
+        final nextIndex = current + 1;
+        final isLast = nextIndex == target;
+
+        _updateState(
+          _state.copyWith(
+            currentHistoryIndex: nextIndex,
+            isInHistoryView: !isLast, // 마지막이면 히스토리 모드 종료
+          ),
+        );
+
+        _showHistoryMessage(index: nextIndex);
+
+        if (isLast) {
+          // 마지막 메시지 본 직후 대화 상태 전환
+          if (_state.currentDialogueIndex < _state.dialogues.length - 1) {
+            _updateState(
+              _state.copyWith(isDialoguePlaying: true, isWaitingForTap: true),
+            );
+          } else {
+            skipOrNext();
+          }
+        }
       }
-    } else if (_state.isInHistoryView) {
-      _updateState(_state.copyWith(isInHistoryView: false));
+    } else {
       skipOrNext();
     }
   }
 
-  void _showHistoryMessage() {
-    if (_state.currentHistoryIndex < 0 ||
-        _state.currentHistoryIndex >= _state.dialogueHistory.length) {
-      return;
-    }
+  void _showHistoryMessage({required int index}) {
+    if (index < 0 || index >= _state.dialogues.length) return;
 
     _textTimer?.cancel();
-    final historyLine = _state.dialogueHistory[_state.currentHistoryIndex];
+    final historyLine = _state.dialogues[index];
     _updateState(
       _state.copyWith(
         currentLine: historyLine,
@@ -291,9 +317,6 @@ class GameScreenController {
   }
 
   void handleKeyEvent(KeyEvent event) {
-    // 로딩중에 키보드 이벤트 처리 return
-    if (_state.isLoading) return;
-
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
         if (canSendMessage) {
@@ -360,7 +383,7 @@ class GameScreenController {
           character = GameConstants.SYSTEM_CHARACTER;
         }
 
-        addDialogueQueue(character, text, '');
+        addDialogue(character, text, '');
       }
       _playNextLine();
     } on NetworkException catch (e) {
@@ -372,21 +395,20 @@ class GameScreenController {
     }
   }
 
-  void addDialogueQueue(String character, String text, String face) {
-    String currentMessage = text.replaceAll("player", playerName);
-    final newQueue = [
-      ..._state.dialogueQueue,
+  void addDialogue(String character, String text, String face) {
+    final currentMessage = text.replaceAll("player", playerName);
+    final newDialogues = List<DialogueLine>.from(_state.dialogues)..add(
       DialogueLine(
         character: character,
         text: currentMessage,
-        face: face == '' ? '001' : face,
+        face: face.isEmpty ? '001' : face,
       ),
-    ];
-    _updateState(_state.copyWith(dialogueQueue: newQueue));
+    );
+    _updateState(_state.copyWith(dialogues: newDialogues));
   }
 
   void addErrorDialogueLine(String error) {
-    addDialogueQueue(
+    addDialogue(
       GameConstants.SYSTEM_CHARACTER,
       '${GameConstants.ERROR_PREFIX}$error',
       '',

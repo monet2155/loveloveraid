@@ -2,7 +2,9 @@ import 'package:loveloveraid/model/dialogue_line.dart';
 
 class GameScreenState {
   final String? sessionId;
-  final List<DialogueLine> dialogueQueue;
+  final List<DialogueLine> dialogues; // dialogue통ㅇ합 작업
+  final int currentDialogueIndex; // 현재 보여주고 있는 대화 인덱스
+  final int currentHistoryIndex;
   final DialogueLine? currentLine;
   final String visibleText;
   final bool isDialoguePlaying;
@@ -10,8 +12,6 @@ class GameScreenState {
   final bool isLoading;
   final Set<String> appearedCharacters;
   final Set<String> animatedCharacters;
-  final List<DialogueLine> dialogueHistory;
-  final int currentHistoryIndex;
   final bool isInHistoryView;
   final bool isUIVisible;
   final bool isHistoryPopupView;
@@ -19,7 +19,9 @@ class GameScreenState {
 
   GameScreenState({
     this.sessionId,
-    this.dialogueQueue = const [],
+    this.dialogues = const [],
+    this.currentDialogueIndex = -1,
+    this.currentHistoryIndex = 0,
     this.currentLine,
     this.visibleText = '',
     this.isDialoguePlaying = false,
@@ -27,8 +29,6 @@ class GameScreenState {
     this.isLoading = false,
     this.appearedCharacters = const {},
     this.animatedCharacters = const {},
-    this.dialogueHistory = const [],
-    this.currentHistoryIndex = -1,
     this.isInHistoryView = false,
     this.isUIVisible = true,
     this.isHistoryPopupView = false,
@@ -37,7 +37,9 @@ class GameScreenState {
 
   GameScreenState copyWith({
     String? sessionId,
-    List<DialogueLine>? dialogueQueue,
+    List<DialogueLine>? dialogues,
+    int? currentDialogueIndex,
+    int? currentHistoryIndex,
     DialogueLine? currentLine,
     String? visibleText,
     bool? isDialoguePlaying,
@@ -45,8 +47,6 @@ class GameScreenState {
     bool? isLoading,
     Set<String>? appearedCharacters,
     Set<String>? animatedCharacters,
-    List<DialogueLine>? dialogueHistory,
-    int? currentHistoryIndex,
     bool? isInHistoryView,
     bool? isUIVisible,
     bool? isHistoryPopupView,
@@ -54,16 +54,16 @@ class GameScreenState {
   }) {
     return GameScreenState(
       sessionId: sessionId ?? this.sessionId,
-      dialogueQueue: dialogueQueue ?? this.dialogueQueue,
+      dialogues: dialogues ?? this.dialogues,
       currentLine: currentLine ?? this.currentLine,
+      currentDialogueIndex: currentDialogueIndex ?? this.currentDialogueIndex,
+      currentHistoryIndex: currentHistoryIndex ?? this.currentHistoryIndex,
       visibleText: visibleText ?? this.visibleText,
       isDialoguePlaying: isDialoguePlaying ?? this.isDialoguePlaying,
       isWaitingForTap: isWaitingForTap ?? this.isWaitingForTap,
       isLoading: isLoading ?? this.isLoading,
       appearedCharacters: appearedCharacters ?? this.appearedCharacters,
       animatedCharacters: animatedCharacters ?? this.animatedCharacters,
-      dialogueHistory: dialogueHistory ?? this.dialogueHistory,
-      currentHistoryIndex: currentHistoryIndex ?? this.currentHistoryIndex,
       isInHistoryView: isInHistoryView ?? this.isInHistoryView,
       isUIVisible: isUIVisible ?? this.isUIVisible,
       isHistoryPopupView: isHistoryPopupView ?? this.isHistoryPopupView,

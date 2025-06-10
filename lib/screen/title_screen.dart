@@ -10,8 +10,6 @@ import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:loveloveraid/screen/loading_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:loveloveraid/providers/player_provider.dart';
 
 class TitleScreen extends StatefulWidget {
   const TitleScreen({super.key});
@@ -144,10 +142,6 @@ class _TitleScreenState extends State<TitleScreen> {
 
     return TitleScreenView(
       onStartNewGame: () {
-        final playerProvider = Provider.of<PlayerProvider>(
-          context,
-          listen: false,
-        );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder:
@@ -155,11 +149,7 @@ class _TitleScreenState extends State<TitleScreen> {
                   onSubmit: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder:
-                            (context) => LoadingScreen(
-                              npcs: npcs,
-                              playerName: playerProvider.player.name,
-                            ),
+                        builder: (context) => LoadingScreen(npcs: npcs),
                       ),
                     );
                   },

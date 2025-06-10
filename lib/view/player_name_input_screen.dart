@@ -3,26 +3,31 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../providers/player_provider.dart';
 
-class PlayerNameInputScreen extends StatelessWidget {
-  final TextEditingController nameController;
+class PlayerNameInputScreen extends StatefulWidget {
   final VoidCallback onSubmit;
 
-  const PlayerNameInputScreen({
-    super.key,
-    required this.nameController,
-    required this.onSubmit,
-  });
+  const PlayerNameInputScreen({super.key, required this.onSubmit});
+
+  @override
+  State<PlayerNameInputScreen> createState() => _PlayerNameInputScreenState();
+}
+
+class _PlayerNameInputScreenState extends State<PlayerNameInputScreen> {
+  final TextEditingController nameController = TextEditingController();
 
   void _handleSubmit(BuildContext context) {
-    if (nameController.text.trim().isEmpty) return;
+    String name = nameController.text.trim();
+    if (name.isEmpty) {
+      name = '김겜돌';
+    }
 
     final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
     final uuid = const Uuid().v4();
 
     playerProvider.setId(uuid);
-    playerProvider.setName(nameController.text.trim());
+    playerProvider.setName(name);
 
-    onSubmit();
+    widget.onSubmit();
   }
 
   @override

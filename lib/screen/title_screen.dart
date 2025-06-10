@@ -5,12 +5,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/view/player_name_input_screen.dart';
 import 'package:loveloveraid/view/title_screen_view.dart';
-import 'package:loveloveraid/screen/game_screen.dart';
 import 'package:loveloveraid/screen/resource_download_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:loveloveraid/screen/loading_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:loveloveraid/providers/player_provider.dart';
 
 class TitleScreen extends StatefulWidget {
   const TitleScreen({super.key});
@@ -21,7 +22,6 @@ class TitleScreen extends StatefulWidget {
 
 class _TitleScreenState extends State<TitleScreen> {
   List<Npc> npcs = [];
-  final TextEditingController nameController = TextEditingController();
   bool _isCheckingResources = true;
 
   @override
@@ -144,21 +144,21 @@ class _TitleScreenState extends State<TitleScreen> {
 
     return TitleScreenView(
       onStartNewGame: () {
+        final playerProvider = Provider.of<PlayerProvider>(
+          context,
+          listen: false,
+        );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder:
                 (context) => PlayerNameInputScreen(
-                  nameController: nameController,
                   onSubmit: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder:
                             (context) => LoadingScreen(
                               npcs: npcs,
-                              playerName:
-                                  nameController.text.isEmpty
-                                      ? "김겜돌"
-                                      : nameController.text, // 플레이어 이름 전달
+                              playerName: playerProvider.player.name,
                             ),
                       ),
                     );

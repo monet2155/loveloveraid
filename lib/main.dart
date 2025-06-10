@@ -7,6 +7,8 @@ import 'package:window_size/window_size.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:loveloveraid/firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'providers/player_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +31,12 @@ void main() async {
     setWindowMaxSize(maxSize);
   }
 
-  runApp(const MainApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => PlayerProvider(),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {

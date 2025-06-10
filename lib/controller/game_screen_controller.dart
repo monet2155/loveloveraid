@@ -10,15 +10,15 @@ import 'package:loveloveraid/exceptions/game_exception.dart';
 import 'package:loveloveraid/services/game_api_service.dart';
 import 'package:loveloveraid/services/tts_service.dart' as tts;
 import 'package:loveloveraid/model/game_screen_state.dart';
-import 'package:loveloveraid/view/history_popup_view.dart';
+import 'package:loveloveraid/providers/player_provider.dart';
 
 class GameScreenController {
-  final String playerName;
   final Function onUpdate;
   final Function onEndChapter;
   final List<Npc> npcs;
   final GameApiService _apiService;
   final tts.TTSService _ttsService;
+  final PlayerProvider _playerProvider;
 
   GameScreenState _state = GameScreenState();
   Timer? _textTimer;
@@ -64,12 +64,13 @@ class GameScreenController {
   bool isEnd = false;
 
   GameScreenController({
-    required this.playerName,
     required this.onUpdate,
     required this.onEndChapter,
     required this.npcs,
+    required PlayerProvider playerProvider,
   }) : _apiService = GameApiService(),
-       _ttsService = tts.TTSService();
+       _ttsService = tts.TTSService(),
+       _playerProvider = playerProvider;
 
   void _updateState(GameScreenState newState) {
     _state = newState;
@@ -108,7 +109,11 @@ class GameScreenController {
       // 대화 히스토리에 플레이어 메시지 추가
       final newHistory = [
         ..._state.dialogues,
-        DialogueLine(character: playerName, text: message, face: ''),
+        DialogueLine(
+          character: _playerProvider.player.name,
+          text: message,
+          face: '',
+        ),
       ];
 
       _updateState(
@@ -396,7 +401,10 @@ class GameScreenController {
   }
 
   void addDialogue(String character, String text, String face) {
-    final currentMessage = text.replaceAll("player", playerName);
+    final currentMessage = text.replaceAll(
+      "player",
+      _playerProvider.player.name,
+    );
     final newDialogues = List<DialogueLine>.from(_state.dialogues)..add(
       DialogueLine(
         character: character,

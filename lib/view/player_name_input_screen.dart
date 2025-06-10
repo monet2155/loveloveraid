@@ -1,14 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+import '../providers/player_provider.dart';
 
-class PlayerNameInputScreen extends StatelessWidget {
-  final TextEditingController nameController;
+class PlayerNameInputScreen extends StatefulWidget {
   final VoidCallback onSubmit;
 
-  const PlayerNameInputScreen({
-    super.key,
-    required this.nameController,
-    required this.onSubmit,
-  });
+  const PlayerNameInputScreen({super.key, required this.onSubmit});
+
+  @override
+  State<PlayerNameInputScreen> createState() => _PlayerNameInputScreenState();
+}
+
+class _PlayerNameInputScreenState extends State<PlayerNameInputScreen> {
+  final TextEditingController nameController = TextEditingController();
+
+  void _handleSubmit(BuildContext context) {
+    String name = nameController.text.trim();
+    if (name.isEmpty) {
+      name = '김겜돌';
+    }
+
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
+    final uuid = const Uuid().v4();
+
+    playerProvider.setId(uuid);
+    playerProvider.setName(name);
+
+    widget.onSubmit();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +55,7 @@ class PlayerNameInputScreen extends StatelessWidget {
                   controller: nameController,
                   style: TextStyle(color: Colors.pink.shade400), // 텍스트 색상 변경
                   textAlign: TextAlign.center,
-                  onSubmitted: (_) => onSubmit(),
+                  onSubmitted: (_) => _handleSubmit(context),
                   decoration: InputDecoration(
                     hintText: '김겜돌',
                     hintStyle: TextStyle(color: Colors.pink.shade200),
@@ -55,7 +75,7 @@ class PlayerNameInputScreen extends StatelessWidget {
               SizedBox(
                 width: 240,
                 child: ElevatedButton(
-                  onPressed: onSubmit,
+                  onPressed: () => _handleSubmit(context),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

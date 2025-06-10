@@ -7,13 +7,8 @@ import 'package:path/path.dart' as path;
 
 class LoadingScreen extends StatefulWidget {
   final List<Npc> npcs;
-  final String playerName;
 
-  const LoadingScreen({
-    super.key,
-    required this.npcs,
-    required this.playerName,
-  });
+  const LoadingScreen({super.key, required this.npcs});
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
@@ -62,11 +57,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder:
-                (context) => GameScreen(
-                  npcs: widget.npcs,
-                  playerName: widget.playerName,
-                ),
+            builder: (context) => GameScreen(npcs: widget.npcs),
           ),
         );
       }

@@ -5,12 +5,13 @@ import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/screen/end_screen.dart';
 import 'package:loveloveraid/view/game_screen_view.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
+import 'package:provider/provider.dart';
+import 'package:loveloveraid/providers/player_provider.dart';
 
 class GameScreen extends StatefulWidget {
   final List<Npc> npcs;
-  final String playerName;
 
-  const GameScreen({super.key, required this.npcs, required this.playerName});
+  const GameScreen({super.key, required this.npcs});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -25,6 +26,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
     _controller = GameScreenController(
       onUpdate: () => setState(() {}),
       onEndChapter: () {
@@ -32,8 +34,8 @@ class _GameScreenState extends State<GameScreen> {
           context,
         ).pushReplacement(MaterialPageRoute(builder: (context) => EndScreen()));
       },
-      playerName: widget.playerName,
       npcs: widget.npcs,
+      playerProvider: playerProvider,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -104,6 +104,12 @@ class GameScreenController {
 
       if (dialogueResponse.state == "ended") {
         isEnd = true;
+        for (var npcName in dialogueResponse.affectionScore.keys) {
+          _playerProvider.player.addAffectionScore(
+            npcName,
+            dialogueResponse.affectionScore[npcName] ?? 0,
+          );
+        }
       }
 
       // 대화 히스토리에 플레이어 메시지 추가

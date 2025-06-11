@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/model/npc.dart';
-import 'package:loveloveraid/screen/end_screen.dart';
+import 'package:loveloveraid/screen/affection_result_screen.dart';
 import 'package:loveloveraid/view/game_screen_view.dart';
 import 'package:provider/provider.dart';
 import 'package:loveloveraid/providers/player_provider.dart';
@@ -29,9 +29,9 @@ class _GameScreenState extends State<GameScreen> {
     _controller = GameScreenController(
       onUpdate: () => setState(() {}),
       onEndChapter: () {
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (context) => EndScreen()));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => AffectionResultScreen()),
+        );
       },
       npcs: widget.npcs,
       playerProvider: playerProvider,

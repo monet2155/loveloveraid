@@ -4,7 +4,6 @@ import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/screen/end_screen.dart';
 import 'package:loveloveraid/view/game_screen_view.dart';
-import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:loveloveraid/providers/player_provider.dart';
 

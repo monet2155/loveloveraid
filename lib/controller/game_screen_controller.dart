@@ -104,10 +104,10 @@ class GameScreenController {
 
       if (dialogueResponse.state == "ended") {
         isEnd = true;
-        for (var npcId in dialogueResponse.affectionScore.keys) {
+        for (var npcName in dialogueResponse.affectionScore.keys) {
           _playerProvider.player.addAffectionScore(
-            npcId,
-            dialogueResponse.affectionScore[npcId] ?? 0,
+            npcName,
+            dialogueResponse.affectionScore[npcName] ?? 0,
           );
         }
       }

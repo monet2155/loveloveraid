@@ -72,12 +72,17 @@ class GameScreenView extends StatelessWidget {
           backgroundColor: Colors.black,
           body: Stack(
             children: [
-              _buildBackground(),
-              _buildCharacterImages(),
+              if (controller.isCgViewVisible == false) ...[
+                _buildBackground(),
+                _buildCharacterImages(),
+              ] else ...[
+                _buildCGImage(),
+              ],
+
               if (controller.isUIVisible) ...[
                 _buildDialogAndInput(),
-                if (controller.isInHistoryView) _buildHistoryIndicator(),
                 buildMenu(context),
+                _buildTopLeftBar(context),
               ],
             ],
           ),
@@ -223,19 +228,16 @@ class GameScreenView extends StatelessWidget {
   }
 
   Widget _buildHistoryIndicator() {
-    return Positioned(
-      top: 20,
-      left: 20,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Text(
-          '히스토리 모드',
-          style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Text(
+        '히스토리 모드',
+        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -244,6 +246,15 @@ class GameScreenView extends StatelessWidget {
     return Positioned.fill(
       child: Image.memory(
         ResourceManager().imageCache['background.jpg']!,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildCGImage() {
+    return Positioned.fill(
+      child: Image.memory(
+        ResourceManager().imageCache['CG001.png']!,
         fit: BoxFit.cover,
       ),
     );
@@ -565,6 +576,40 @@ class GameScreenView extends StatelessWidget {
             onPressed: onSend,
           ),
         ],
+      ),
+    );
+  }
+
+  Positioned _buildTopLeftBar(BuildContext context) {
+    return Positioned(
+      top: 20,
+      left: 20,
+      child: Row(
+        children: [
+          if (controller.isInHistoryView)
+            _buildHistoryIndicator(), // 칩이 있을 때만 표시
+          _cgButton(context), // 항상 표시
+        ],
+      ),
+    );
+  }
+
+  Widget _cgButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        controller.showCGView();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.photo_library_rounded,
+          color: Colors.white70,
+          size: 22,
+        ),
       ),
     );
   }

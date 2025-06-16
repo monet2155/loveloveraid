@@ -58,6 +58,7 @@ class GameScreenController {
   bool get isInHistoryView => _state.isInHistoryView;
   bool get isUIVisible => _state.isUIVisible;
   bool get isHistoryPopupView => _state.isHistoryPopupView;
+  bool get isCgViewVisible => _state.isCgViewVisible;
   List<DialogueLine> get dialogueHistory => _state.dialogues;
   int get currentDialogueIndex => _state.currentDialogueIndex;
 
@@ -296,8 +297,12 @@ class GameScreenController {
     _updateState(
       _state.copyWith(isHistoryPopupView: !_state.isHistoryPopupView),
     );
+  }
 
-    print("showHistoryPopup");
+  void showCGView() {
+    if (_state.isLoading) return;
+
+    _updateState(_state.copyWith(isCgViewVisible: !_state.isCgViewVisible));
   }
 
   void skipOrNext() {

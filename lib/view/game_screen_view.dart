@@ -5,8 +5,6 @@ import 'package:loveloveraid/model/dialogue_line.dart';
 import 'package:loveloveraid/screen/title_screen.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:loveloveraid/view/history_popup_view.dart';
-import 'package:loveloveraid/view/game_cg_view.dart';
-import 'package:loveloveraid/screen/game_menu_button_screen.dart';
 
 final alignments = [
   Alignment.bottomCenter,
@@ -74,11 +72,16 @@ class GameScreenView extends StatelessWidget {
           backgroundColor: Colors.black,
           body: Stack(
             children: [
-              _buildBackground(),
-              _buildCharacterImages(),
+              if (controller.isCgViewVisible == false) ...[
+                _buildBackground(),
+                _buildCharacterImages(),
+              ] else ...[
+                _buildCGImage(),
+              ],
+
               if (controller.isUIVisible) ...[
                 _buildDialogAndInput(),
-                GameMenuButtonScreen(controller: controller),
+                buildMenu(context),
                 _buildTopLeftBar(context),
               ],
             ],
@@ -88,8 +91,144 @@ class GameScreenView extends StatelessWidget {
     );
   }
 
+  Positioned buildMenu(BuildContext context) {
+    return Positioned(
+      top: 20,
+      right: 20,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: PopupMenuButton<String>(
+          icon: const Icon(Icons.menu, color: Colors.white70),
+          tooltip: '메뉴',
+          color: Colors.black.withOpacity(0.9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          itemBuilder:
+              (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'help',
+                  child: Text('도움말', style: TextStyle(color: Colors.white70)),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'settings',
+                  child: Text('설정', style: TextStyle(color: Colors.white70)),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'save',
+                  child: Text('저장하기', style: TextStyle(color: Colors.white70)),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'load',
+                  child: Text('불러오기', style: TextStyle(color: Colors.white70)),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'historyPopup',
+                  child: Text(
+                    '전체 히스토리 보기',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'home',
+                  child: Text('홈으로', style: TextStyle(color: Colors.white70)),
+                ),
+              ],
+          onSelected: (String value) {
+            switch (value) {
+              case 'settings':
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('준비중입니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                break;
+              case 'save':
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('준비중입니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                break;
+              case 'load':
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('준비중입니다'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                break;
+              case 'help':
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      backgroundColor: Colors.black.withOpacity(0.9),
+                      title: const Text(
+                        '도움말',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            '스페이스바 또는 엔터 : 진행',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            '위아래 방향키 : 대화 기록 보기',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "'Ctrl + V' 키 : UI 숨기기/숨기기 해제",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "'Ctrl + H' 키 : 전체 히스토리 보기",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text(
+                            '확인',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                break;
+              case 'home':
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const TitleScreen()),
+                  (route) => false,
+                );
+                break;
+              case 'historyPopup':
+                controller.showHistoryPopup();
+                break;
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildHistoryIndicator() {
-     return Container(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
@@ -107,6 +246,15 @@ class GameScreenView extends StatelessWidget {
     return Positioned.fill(
       child: Image.memory(
         ResourceManager().imageCache['background.jpg']!,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildCGImage() {
+    return Positioned.fill(
+      child: Image.memory(
+        ResourceManager().imageCache['CG001.png']!,
         fit: BoxFit.cover,
       ),
     );
@@ -431,27 +579,25 @@ class GameScreenView extends StatelessWidget {
       ),
     );
   }
-   Positioned _buildTopLeftBar(BuildContext context) {
+
+  Positioned _buildTopLeftBar(BuildContext context) {
     return Positioned(
       top: 20,
       left: 20,
       child: Row(
         children: [
-          if (controller.isInHistoryView) 
-          _buildHistoryIndicator(),   // 칩이 있을 때만 표시
-          _cgButton(context),     // 항상 표시
+          if (controller.isInHistoryView)
+            _buildHistoryIndicator(), // 칩이 있을 때만 표시
+          _cgButton(context), // 항상 표시
         ],
       ),
-   );
+    );
   }
 
   Widget _cgButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CgGameView()),
-        );
+        controller.showCGView();
       },
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -459,8 +605,11 @@ class GameScreenView extends StatelessWidget {
           color: Colors.black.withOpacity(0.7),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Icon(Icons.photo_library_rounded,
-            color: Colors.white70, size: 22),
+        child: const Icon(
+          Icons.photo_library_rounded,
+          color: Colors.white70,
+          size: 22,
+        ),
       ),
     );
   }

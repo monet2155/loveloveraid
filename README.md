@@ -82,3 +82,20 @@ lib/
 ## 라이선스
 
 이 프로젝트는 비공개로 유지됩니다.
+
+## 사용된 라이브러리
+
+- [window_size](https://pub.dev/packages/window_size) - 윈도우 크기 조절을 위한 패키지
+- [http](https://pub.dev/packages/http) - HTTP 통신을 위한 패키지
+- [flutter_dotenv](https://pub.dev/packages/flutter_dotenv) - 환경 변수 관리를 위한 패키지
+- [just_audio](https://pub.dev/packages/just_audio) - 오디오 재생을 위한 패키지
+- [firebase_core](https://pub.dev/packages/firebase_core) - Firebase 핵심 기능
+- [firebase_storage](https://pub.dev/packages/firebase_storage) - Firebase 스토리지
+- [path_provider](https://pub.dev/packages/path_provider) - 파일 시스템 경로 접근
+- [shared_preferences](https://pub.dev/packages/shared_preferences) - 로컬 데이터 저장
+- [cloud_firestore](https://pub.dev/packages/cloud_firestore) - Firebase Firestore
+- [connectivity_plus](https://pub.dev/packages/connectivity_plus) - 네트워크 연결 상태 모니터링
+- [path](https://pub.dev/packages/path) - 경로 조작 유틸리티
+- [encrypt](https://pub.dev/packages/encrypt) - 암호화 기능
+- [provider](https://pub.dev/packages/provider) - 상태 관리
+- [uuid](https://pub.dev/packages/uuid) - 고유 식별자 생성

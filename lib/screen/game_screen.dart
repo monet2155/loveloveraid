@@ -25,6 +25,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    print('GameScreen initState');
     final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
     _controller = GameScreenController(
       onUpdate: () => setState(() {}),

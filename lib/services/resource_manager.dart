@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path/path.dart' as path;
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ResourceManager {
   static final ResourceManager _instance = ResourceManager._internal();
@@ -24,8 +25,14 @@ class ResourceManager {
   // 이미지 캐시 추가
   final Map<String, Uint8List> _imageCache = {};
 
+  // 이미지 URL 캐시 추가
+  final Map<String, String> _imageUrlCache = {};
+
   // 이미지 캐시 getter 추가
   Map<String, Uint8List> get imageCache => _imageCache;
+
+  // 이미지 URL 캐시 getter 추가
+  Map<String, String> get imageUrlCache => _imageUrlCache;
 
   bool get isInitialized => _isInitialized;
 
@@ -37,6 +44,14 @@ class ResourceManager {
 
   Future<void> initialize() async {
     if (_isInitialized) return;
+
+    // 웹 환경에서는 Firebase Storage에서 직접 다운로드
+    if (kIsWeb) {
+      print('웹 환경에서 Firebase Storage에서 이미지를 다운로드합니다.');
+      await fetchCharacterResources();
+      _isInitialized = true;
+      return;
+    }
 
     final appDir = await getApplicationSupportDirectory();
     _resourcesDir = Directory(path.join(appDir.path, 'game_resources'));
@@ -68,6 +83,12 @@ class ResourceManager {
   }
 
   Future<void> update({void Function(double)? onProgress}) async {
+    // 웹 환경에서는 업데이트 건너뛰기
+    if (kIsWeb) {
+      print('웹 환경에서는 리소스 업데이트를 건너뜁니다.');
+      return;
+    }
+
     if (!await checkForUpdates()) {
       return;
     }
@@ -121,6 +142,8 @@ class ResourceManager {
     int completedItems = 0;
     final totalItems = resourceNames.length;
 
+    print('resourceNames: ${resourceNames.length}');
+
     for (var name in resourceNames) {
       final item = resourcesRef.child(name);
       final downloadUrl = await item.getDownloadURL();
@@ -153,10 +176,21 @@ class ResourceManager {
     if (!_isInitialized) {
       throw Exception('ResourceManager가 초기화되지 않았습니다.');
     }
+
+    // 웹 환경에서는 로컬 파일 경로 사용 불가
+    if (kIsWeb) {
+      throw Exception('웹 환경에서는 로컬 파일 시스템에 접근할 수 없습니다.');
+    }
+
     return path.join(_resourcesDir.path, fileName);
   }
 
   Future<String> readEncryptedJson(String fileName) async {
+    // 웹 환경에서는 로컬 파일 읽기 불가
+    if (kIsWeb) {
+      throw Exception('웹 환경에서는 로컬 파일을 읽을 수 없습니다.');
+    }
+
     final file = File(getResourcePath(fileName));
     final content = jsonDecode(await file.readAsString());
     final iv = encrypt.IV.fromBase64(content['iv']);
@@ -172,6 +206,11 @@ class ResourceManager {
       if (_imageCache.containsKey(fileName)) {
         print('캐시된 이미지 반환: $fileName');
         return _imageCache[fileName]!;
+      }
+
+      // 웹 환경에서는 캐시된 이미지만 사용
+      if (kIsWeb) {
+        throw Exception('웹 환경에서 이미지가 캐시에 없습니다: $fileName');
       }
 
       final file = File(getResourcePath(fileName));
@@ -196,8 +235,35 @@ class ResourceManager {
     }
   }
 
+  // 웹 환경용 이미지 URL 가져오기 메서드 추가
+  Future<void> downloadImagesForWeb() async {
+    try {
+      await fetchLatestVersion();
+      final storage = FirebaseStorage.instance;
+      final resourcesRef = storage.ref().child('resources');
+
+      print('웹 환경에서 ${resourceNames.length}개의 이미지 URL을 가져옵니다.');
+
+      for (var fileName in resourceNames) {
+        try {
+          final item = resourcesRef.child(fileName);
+          final downloadUrl = await item.getDownloadURL();
+
+          _imageUrlCache[fileName] = downloadUrl;
+          print('이미지 URL 가져오기 완료: $fileName');
+        } catch (e) {
+          print('이미지 URL 가져오기 중 오류 발생: $fileName - $e');
+        }
+      }
+    } catch (e) {
+      print('웹 이미지 URL 가져오기 중 오류 발생: $e');
+      rethrow;
+    }
+  }
+
   // 캐시 초기화 메서드 추가
   void clearImageCache() {
     _imageCache.clear();
+    _imageUrlCache.clear();
   }
 }

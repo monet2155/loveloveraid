@@ -23,7 +23,9 @@ void main() async {
 
   await ResourceManager().initialize();
 
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+  print("kIsWeb ${kIsWeb}");
+
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     const minSize = Size(1280, 720);
     const maxSize = Size(1920, 1080);
     setWindowTitle('러브러브 레이드');

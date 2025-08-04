@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:loveloveraid/components/dot_pulse.dart';
 import 'package:loveloveraid/controller/game_screen_controller.dart';
 import 'package:loveloveraid/model/dialogue_line.dart';
@@ -244,19 +247,31 @@ class GameScreenView extends StatelessWidget {
 
   Widget _buildBackground() {
     return Positioned.fill(
-      child: Image.memory(
-        ResourceManager().imageCache['background.jpg']!,
-        fit: BoxFit.cover,
-      ),
+      child:
+          kIsWeb
+              ? Image.network(
+                ResourceManager().imageUrlCache['background.jpg']!,
+                fit: BoxFit.cover,
+              )
+              : Image.memory(
+                ResourceManager().imageCache['background.jpg']!,
+                fit: BoxFit.cover,
+              ),
     );
   }
 
   Widget _buildCGImage() {
     return Positioned.fill(
-      child: Image.memory(
-        ResourceManager().imageCache['CG001.png']!,
-        fit: BoxFit.cover,
-      ),
+      child:
+          kIsWeb
+              ? Image.network(
+                ResourceManager().imageUrlCache['CG001.png']!,
+                fit: BoxFit.cover,
+              )
+              : Image.memory(
+                ResourceManager().imageCache['CG001.png']!,
+                fit: BoxFit.cover,
+              ),
     );
   }
 
@@ -304,28 +319,61 @@ class GameScreenView extends StatelessWidget {
                     final currentFace =
                         controller.characterFaces[character] ?? '001';
                     final imageKey = '${characterId}_$currentFace.png';
-                    final characterImage =
-                        ResourceManager().imageCache[imageKey] ??
-                        ResourceManager().imageCache['${characterId}_001.png']!;
+                    print('imageKey: $imageKey');
 
-                    final baseContent = Transform.translate(
-                      offset: Offset(offsetX, 0),
-                      child: Transform.scale(
-                        scale: 3.0,
-                        child: SizedBox(
-                          key: ValueKey('char_$character'),
-                          width: 450,
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            heightFactor: 0.5,
-                            child: Image.memory(
-                              characterImage,
-                              fit: BoxFit.contain,
+                    var baseContent;
+
+                    if (kIsWeb) {
+                      final characterImageUrl =
+                          ResourceManager().imageUrlCache[imageKey] ??
+                          ResourceManager()
+                              .imageUrlCache['${characterId}_001.png']!;
+                      print('characterImageUrl: $characterImageUrl');
+
+                      baseContent = Transform.translate(
+                        offset: Offset(offsetX, 0),
+                        child: Transform.scale(
+                          scale: 3.0,
+                          child: SizedBox(
+                            key: ValueKey('char_$character'),
+                            width: 450,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              heightFactor: 0.5,
+                              child: Image.network(
+                                characterImageUrl,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      final characterImage =
+                          ResourceManager().imageCache[imageKey] ??
+                          ResourceManager()
+                              .imageCache['${characterId}_001.png']!;
+                      print('characterImage: $characterImage');
+
+                      baseContent = Transform.translate(
+                        offset: Offset(offsetX, 0),
+                        child: Transform.scale(
+                          scale: 3.0,
+                          child: SizedBox(
+                            key: ValueKey('char_$character'),
+                            width: 450,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              heightFactor: 0.5,
+                              child: Image.memory(
+                                characterImage,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
 
                     if (isNew) {
                       return TweenAnimationBuilder<double>(
@@ -367,28 +415,56 @@ class GameScreenView extends StatelessWidget {
                     final currentFace =
                         controller.characterFaces[character] ?? '001';
                     final imageKey = '${characterId}_$currentFace.png';
-                    final characterImage =
-                        ResourceManager().imageCache[imageKey] ??
-                        ResourceManager().imageCache['${characterId}_001.png']!;
 
-                    final baseContent = Transform.translate(
-                      offset: Offset(offsetX, 0),
-                      child: Transform.scale(
-                        scale: 3.0,
-                        child: SizedBox(
-                          key: ValueKey('char_$character'),
-                          width: 450,
-                          child: Align(
-                            alignment: Alignment.topCenter,
-                            heightFactor: 0.5,
-                            child: Image.memory(
-                              characterImage,
-                              fit: BoxFit.contain,
+                    var baseContent;
+
+                    if (kIsWeb) {
+                      final characterImageUrl =
+                          ResourceManager().imageUrlCache[imageKey] ??
+                          ResourceManager()
+                              .imageUrlCache['${characterId}_001.png']!;
+                      baseContent = Transform.translate(
+                        offset: Offset(offsetX, 0),
+                        child: Transform.scale(
+                          scale: 3.0,
+                          child: SizedBox(
+                            key: ValueKey('char_$character'),
+                            width: 450,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              heightFactor: 0.5,
+                              child: Image.network(
+                                characterImageUrl,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      final characterImage =
+                          ResourceManager().imageCache[imageKey] ??
+                          ResourceManager()
+                              .imageCache['${characterId}_001.png']!;
+                      baseContent = Transform.translate(
+                        offset: Offset(offsetX, 0),
+                        child: Transform.scale(
+                          scale: 3.0,
+                          child: SizedBox(
+                            key: ValueKey('char_$character'),
+                            width: 450,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              heightFactor: 0.5,
+                              child: Image.memory(
+                                characterImage,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
 
                     if (isNew) {
                       return TweenAnimationBuilder<double>(

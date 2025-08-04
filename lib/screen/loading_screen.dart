@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:loveloveraid/model/npc.dart';
 import 'package:loveloveraid/services/resource_manager.dart';
 import 'package:loveloveraid/screen/game_screen.dart';
@@ -32,6 +33,23 @@ class _LoadingScreenState extends State<LoadingScreen> {
   Future<void> _preloadImages() async {
     try {
       final resourceManager = ResourceManager();
+
+      // 웹 환경에서는 ResourceManager 초기화 시 이미지가 다운로드됨
+      if (kIsWeb) {
+        print('웹 환경에서 이미지 로딩 완료');
+        await resourceManager.downloadImagesForWeb();
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => GameScreen(npcs: widget.npcs),
+            ),
+          );
+        }
+        return;
+      }
+
+      // 네이티브 환경에서는 기존 로직 사용
       final resourcesDir = Directory(resourceManager.getResourcePath(''));
 
       if (!await resourcesDir.exists()) {

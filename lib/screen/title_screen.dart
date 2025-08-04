@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:loveloveraid/model/npc.dart';
@@ -66,6 +67,10 @@ class _TitleScreenState extends State<TitleScreen> {
 
   Future<void> _checkResources() async {
     try {
+      if (kIsWeb) {
+        initGame();
+        return;
+      }
       final needsUpdate = await ResourceManager().checkForUpdates();
       if (needsUpdate) {
         if (mounted) {
